@@ -18,7 +18,7 @@ int createHtml(void) {
         "<head>\n"
         "    <meta charset=\"UTF-8\">\n"
         "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
-        "    <title>HelloKitty</title>\n"
+        "    <title>HK</title>\n"
         "</head>\n"
         "<body>\n"
         "    <h1>Welcome</h1>\n"
