@@ -29,11 +29,20 @@ int createHtml(void) {
 
 int main(int argc, char* argv[]) {
     if (argc == 2) {
-        if (strcmp(argv[1], "helloc") == 0) {
-            helloc();
-        }
-        if (strcmp(argv[1], "chtml") == 0) {
-            createHtml();
+        switch (argv[1][0]) {
+            case 'h':
+                if (strcmp(argv[1], "helloc") == 0) {
+                    helloc();
+                }
+                break;
+            case 'c':
+                if (strcmp(argv[1], "chtml") == 0) {
+                    createHtml();
+                }
+                break;
+            default:
+                printf("Unknown command\n");
+                break;
         }
     }
     return 0;
