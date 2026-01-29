@@ -28,6 +28,9 @@ int createHtml(void) {
 }
 
 int main(int argc, char* argv[]) {
+    if(argc!=2){
+        return 0;
+    }
 
     if (strcmp( argv[1], "helloc") == 0){
         helloc();
@@ -35,8 +38,6 @@ int main(int argc, char* argv[]) {
     } else if (strcmp( argv[1], "chtml") == 0){
         createHtml();
         return 0;
-    } else {
-        printf("No valid command provided\n");
     }
 
     return 0;
