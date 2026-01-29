@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 int helloc(void) {
     printf("Hello, C.\n");
@@ -28,10 +29,8 @@ int createHtml(void) {
 }
 
 int main(int argc, char* argv[]) {
-    if(argc!=2){
-        return 0;
-    }
-
+    createHtml();
+    
     if (strcmp( argv[1], "helloc") == 0){
         helloc();
         return 0;
@@ -40,6 +39,7 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
+    system("pause");
     return 0;
 }
 
