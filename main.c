@@ -14,7 +14,7 @@ int createHtml(void) {
     }
     fprintf(file, 
         "<!DOCTYPE html>\n"
-        "<html lang=\"en\">\n"
+        "<html lang=\"de\">\n"
         "<head>\n"
         "    <meta charset=\"UTF-8\">\n"
         "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
@@ -28,25 +28,20 @@ int createHtml(void) {
 }
 
 int main(int argc, char* argv[]) {
-    if (argc == 2) {
-        switch (argv[1][0]) {
-            case 'h':
-                if (strcmp(argv[1], "helloc") == 0) {
-                    helloc();
-                }
-                break;
-            case 'c':
-                if (strcmp(argv[1], "chtml") == 0) {
-                    createHtml();
-                }
-                break;
-            default:
-                printf("Unknown command\n");
-                break;
-        }
+
+    if (strcmp( argv[1], "helloc") == 0){
+        helloc();
+        return 0;
+    } else if (strcmp( argv[1], "chtml") == 0){
+        createHtml();
+        return 0;
+    } else {
+        printf("No valid command provided\n");
     }
+
     return 0;
 }
+
 
 
 
