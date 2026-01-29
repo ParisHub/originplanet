@@ -1,9 +1,15 @@
 #include <stdio.h>
 
-int main(void) {
+int helloc(void) {
     printf("Hello, C.\n");
     return 0;
 }
+
+int main(void) {
+    helloc();
+    return 0;
+}
+
 
 
 
