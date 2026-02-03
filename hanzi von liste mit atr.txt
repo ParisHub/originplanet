@@ -1,0 +1,166 @@
+0, líng, Null
+一, yī, eins
+二, èr, zwei
+三, sān, drei
+四, sì, vier
+五, wǔ, fünf
+六, liù, sechs
+七, qī, sieben
+八, bā, acht
+九, jiǔ, neun
+十, shí, zehn
+我, wǒ, ich
+你, nǐ, du
+他, tā, er
+她, tā, sie
+们, men, Pluralsuffix
+好, hǎo, gut
+叫, jiào, heißen
+姓, xìng, Nachname / heißen mit Nachnamen
+什, shén, was
+么, me, (Fragepartikel)
+名, míng, Name
+字, zì, Schriftzeichen
+中, zhōng, Mitte / China
+文, wén, Schrift / Sprache
+请, qǐng, bitte
+问, wèn, fragen
+认, rèn, erkennen / kennen
+识, shí, kennen
+高, gāo, hoch / froh
+兴, xìng, Freude / Stimmung
+对, duì, richtig
+不, bù, nicht
+起, qǐ, aufstehen
+呢, ne, (Fragepartikel), nur lesen
+早, zǎo, früh / Morgen
+上, shàng, oben / auf
+是, shì, sein
+住, zhù, wohnen
+在, zài, in / an / bei
+哪, nǎ, welche/r/s
+里, lǐ, innen
+北, běi, Norden
+京, jīng, Hauptstadt
+美, měi, schön / USA
+英, yīng, heldenhaft / England
+国, guó, Land
+明, míng, hell
+星, xīng, Stern
+吗, ma, (Fragepartikel)
+但, dàn, aber, nur lesen
+德, dé, Tugend / Deutschland, nur lesen
+柏, bǎi, Zypresse / Berlin, nur lesen
+林, lín, Wald / Berlin, nur lesen
+也, yě, auch
+爸, bà, Papa
+妈, mā, Mama
+哥, gē, älterer Bruder
+弟, dì, jüngerer Bruder
+姐, jiě, ältere Schwester
+妹, mèi, jüngere Schwester
+都, dōu, alle / beide
+工, gōng, Arbeit
+作, zuò, machen / Arbeit
+学, xué, lernen / studieren
+生, shēng, geboren / Schüler
+家, jiā, Familie / Zuhause
+和, hé, und / mit
+de, (Attributpartikel)
+做, zuò, tun / machen
+老, lǎo, alt
+师, shī, Lehrer
+医, yī, Medizin / Arzt
+生, shēng, (bereits oben aufgeführt)
+记, jì, merken / notieren
+者, zhě, (Suffix für Personen / Berufe)
+照, zhào, Foto / reflektieren, nur lesen
+片, piàn, Scheibe / Foto, nur lesen
+护, hù, schützen, nur lesen
+士, shì, Gelehrter / Krieger, nur lesen
+校, xiào, Schule, nur lesen
+谁, shéi, wer
+法, fǎ, Gesetz / Frankreich
+海, hǎi, Meer
+现, xiàn, erscheinen / jetzt
+出, chū, herauskommen
+地, dì, Boden / Erde
+运, yùn, bewegen / Transport
+动, dòng, bewegen
+可, kě, können / niedlich
+爱, ài, lieben
+年, nián, Jahr
+岁, suì, Lebensjahr
+很, hěn, sehr
+电, diàn, Elektrizität
+子, zǐ, Kind / Suffix
+知, zhī, wissen
+道, dào, Weg / wissen
+轻, qīng, leicht / jung, nur lesen
+漂, piào, hübsch, nur lesen
+亮, liàng, hell / hübsch, nur lesen
+员, yuán, Mitglied, nur lesen
+真, zhēn, wirklich, nur lesen
+帅, shuài, gutaussehend, nur lesen
+手, shǒu, Hand
+机, jī, Maschine
+话, huà, Sprache / Rede
+多, duō, viel
+少, shǎo, wenig
+公, gōng, öffentlich
+园, yuán, Garten
+路, lù, Weg / Straße
+号, hào, Nummer
+这, zhè, dies
+新, xīn, neu
+址, zhǐ, Adresse
+房, fáng, Haus / Zimmer
+间, jiān, (Zähleinheitswort für Räume)
+以, yǐ, mittels / wegen
+给, gěi, geben / an
+打, dǎ, schlagen / anrufen
+到, dào, ankommen
+谢, xiè, danken
+发, fā, senden, nur lesen
+送, sòng, schicken / schenken, nur lesen
+收, shōu, empfangen, nur lesen
+退, tuì, zurückgeben, nur lesen
+寓, yù, Wohnung, nur lesen
+码, mǎ, Code / Nummer, nur lesen
+月, yuè, Monat / Mond
+期, qī, Zeitraum / Woche
+今, jīn, heute
+天, tiān, Tag / Himmel
+几, jǐ, wie viele
+看, kàn, schauen / lesen
+书, shū, Buch
+见, jiàn, sehen / treffen
+面, miàn, Gesicht / Nudel
+吃, chī, essen
+饭, fàn, Gekochter Reis / Essen
+班, bān, Klasse / Dienst
+去, qù, gehen
+没, méi, nicht (haben)
+怎, zěn, wie
+样, yàng, Art / Weise
+的, de, (bereits oben aufgeführt)
+餐, cān, Speise, nur lesen
+厨, chú, Küche, nur lesen
+题, tí, Thema / Aufgabe, nur lesen
+人, rén, Mensch
+亻, rén, Mensch (Radikal)
+女, nǚ, Frau
+口, kǒu, Mund
+日, rì, Sonne / Tag
+宀, mián, Dach (Radikal)
+阝, fù, Hügel / Stadt (Radikal)
+土, tǔ, Erde
+水, shuǐ, Wasser
+氵, shuǐ, Wasser (Radikal)
+言, yán, Sprache / Rede
+讠, yán, Sprache / Rede (Radikal)
+走, zǒu, gehen
+辶, chuò, gehen (Radikal)
+月, yuè, Mond (Radikal)
+手, shǒu, Hand
+扌, shǒu, Hand (Radikal)
