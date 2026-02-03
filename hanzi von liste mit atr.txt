@@ -17,39 +17,39 @@
 好, hǎo, gut
 叫, jiào, heißen
 姓, xìng, Nachname / heißen mit Nachnamen
-什, shén, was
-么, me, (Fragepartikel)
-名, míng, Name
-字, zì, Schriftzeichen
-中, zhōng, Mitte / China
-文, wén, Schrift / Sprache
+什, shén, nur zusammen mit 么: 什么 = was
+么, me, nur zusammen mit 什: 什么 = was
+名, míng, Name (Teil von 名字)
+字, zì, Zeichen (wichtig für 名字)
+中, zhōng, Mitte (China nur in 中国)
+文, wén, Schrift (Sprache nur in 中文)
 请, qǐng, bitte
 问, wèn, fragen
 认, rèn, erkennen / kennen
 识, shí, kennen
-高, gāo, hoch / froh
-兴, xìng, Freude / Stimmung
-对, duì, richtig
+高, gāo, hoch (froh nur in 高兴)
+兴, xìng, Interesse / Stimmung
+对, duì, richtig / korrekt
 不, bù, nicht
-起, qǐ, aufstehen
+起, qǐ, auf (für 对不起 relevant)
 呢, ne, (Fragepartikel), nur lesen
 早, zǎo, früh / Morgen
-上, shàng, oben / auf
+上, shàng, auf
 是, shì, sein
 住, zhù, wohnen
-在, zài, in / an / bei
+在, zài, sich befinden in
 哪, nǎ, welche/r/s
-里, lǐ, innen
+里, lǐ, in
 北, běi, Norden
 京, jīng, Hauptstadt
-美, měi, schön / USA
-英, yīng, heldenhaft / England
+美, měi, USA
+英, yīng, England
 国, guó, Land
 明, míng, hell
 星, xīng, Stern
 吗, ma, (Fragepartikel)
 但, dàn, aber, nur lesen
-德, dé, Tugend / Deutschland, nur lesen
+德, dé, Deutschland, nur lesen
 柏, bǎi, Zypresse / Berlin, nur lesen
 林, lín, Wald / Berlin, nur lesen
 也, yě, auch
@@ -63,9 +63,9 @@
 工, gōng, Arbeit
 作, zuò, machen / Arbeit
 学, xué, lernen / studieren
-生, shēng, geboren / Schüler
+生, shēng, Schüler
 家, jiā, Familie / Zuhause
-和, hé, und / mit
+和, hé, und
 de, (Attributpartikel)
 做, zuò, tun / machen
 老, lǎo, alt
@@ -80,22 +80,22 @@ de, (Attributpartikel)
 士, shì, Gelehrter / Krieger, nur lesen
 校, xiào, Schule, nur lesen
 谁, shéi, wer
-法, fǎ, Gesetz / Frankreich
+法, fǎ, Frankreich
 海, hǎi, Meer
-现, xiàn, erscheinen / jetzt
+现, xiàn, jetzt
 出, chū, herauskommen
 地, dì, Boden / Erde
 运, yùn, bewegen / Transport
 动, dòng, bewegen
-可, kě, können / niedlich
+可, kě, können
 爱, ài, lieben
 年, nián, Jahr
 岁, suì, Lebensjahr
 很, hěn, sehr
 电, diàn, Elektrizität
-子, zǐ, Kind / Suffix
+子, zǐ, Suffix
 知, zhī, wissen
-道, dào, Weg / wissen
+道, dào, wissen (in 知道)
 轻, qīng, leicht / jung, nur lesen
 漂, piào, hübsch, nur lesen
 亮, liàng, hell / hübsch, nur lesen
@@ -104,7 +104,7 @@ de, (Attributpartikel)
 帅, shuài, gutaussehend, nur lesen
 手, shǒu, Hand
 机, jī, Maschine
-话, huà, Sprache / Rede
+话, huà, Sprache
 多, duō, viel
 少, shǎo, wenig
 公, gōng, öffentlich
@@ -135,32 +135,44 @@ de, (Attributpartikel)
 看, kàn, schauen / lesen
 书, shū, Buch
 见, jiàn, sehen / treffen
-面, miàn, Gesicht / Nudel
+面, miàn, Gesicht
 吃, chī, essen
 饭, fàn, Gekochter Reis / Essen
-班, bān, Klasse / Dienst
+班, bān, Klasse
 去, qù, gehen
-没, méi, nicht (haben)
+没, méi, nicht haben
 怎, zěn, wie
-样, yàng, Art / Weise
+样, yàng, Art
 的, de, (bereits oben aufgeführt)
 餐, cān, Speise, nur lesen
 厨, chú, Küche, nur lesen
 题, tí, Thema / Aufgabe, nur lesen
 人, rén, Mensch
-亻, rén, Mensch (Radikal)
+亻, rén, Personen-Radikal
 女, nǚ, Frau
 口, kǒu, Mund
 日, rì, Sonne / Tag
-宀, mián, Dach (Radikal)
-阝, fù, Hügel / Stadt (Radikal)
+宀, mián, Gebäude-Radikal
+阝, fù, Orts-Radikal
 土, tǔ, Erde
 水, shuǐ, Wasser
-氵, shuǐ, Wasser (Radikal)
+氵, shuǐ, Wasser-Radikal
 言, yán, Sprache / Rede
 讠, yán, Sprache / Rede (Radikal)
 走, zǒu, gehen
-辶, chuò, gehen (Radikal)
+辶, chuò, Bewegungs-Radikal
 月, yuè, Mond (Radikal)
 手, shǒu, Hand
-扌, shǒu, Hand (Radikal)
+扌, shǒu, Handlungs-Radikal
+什么, shénme, was
+名字, míngzi, Name
+中国, Zhōngguó, China
+中文, Zhōngwén, Chinesisch
+高兴, gāoxìng, froh
+对不起, duìbuqǐ, Entschuldigung
+知道, zhīdào, wissen
+手机, shǒujī, Handy
+公园, gōngyuán, Park
+看书, kànshū, Buch lesen
+吃饭, chīfàn, essen
+见面, jiànmiàn, sich treffen
