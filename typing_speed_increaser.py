@@ -4,13 +4,18 @@
 from __future__ import annotations
 
 import argparse
+import os
 import random
 import sys
-import termios
 import textwrap
 import time
-import tty
 from dataclasses import dataclass
+
+if os.name == "nt":
+    import msvcrt
+else:
+    import termios
+    import tty
 
 WORD_BANK = {
     "easy": "cat dog sun milk tree smile book home river green table light happy quick bring".split(),
@@ -84,13 +89,39 @@ def finger_focus(result: RoundResult) -> str:
     return f"Focus drill: practice these keys slowly for 2 minutes -> {drill}."
 
 
-def capture_typed_line() -> tuple[str, float]:
-    """Read one typed line; start the timer on the first typed character."""
-    if not sys.stdin.isatty():
-        start = time.perf_counter()
-        typed = input("> ")
-        return typed, max(time.perf_counter() - start, 0.0)
+def capture_typed_line_windows() -> tuple[str, float]:
+    typed_chars: list[str] = []
+    started_at: float | None = None
 
+    print("> ", end="", flush=True)
+    while True:
+        key = msvcrt.getwch()
+
+        if key in ("\r", "\n"):
+            print()
+            break
+
+        if key in ("\x00", "\xe0"):
+            _ = msvcrt.getwch()
+            continue
+
+        if key == "\x08":
+            if typed_chars:
+                typed_chars.pop()
+                print("\b \b", end="", flush=True)
+            continue
+
+        if started_at is None:
+            started_at = time.perf_counter()
+
+        typed_chars.append(key)
+        print(key, end="", flush=True)
+
+    elapsed = 0.0 if started_at is None else time.perf_counter() - started_at
+    return "".join(typed_chars), elapsed
+
+
+def capture_typed_line_posix() -> tuple[str, float]:
     fd = sys.stdin.fileno()
     old_settings = termios.tcgetattr(fd)
     typed_chars: list[str] = []
@@ -118,6 +149,19 @@ def capture_typed_line() -> tuple[str, float]:
 
     elapsed = 0.0 if started_at is None else time.perf_counter() - started_at
     return "".join(typed_chars), elapsed
+
+
+def capture_typed_line() -> tuple[str, float]:
+    """Read one typed line; start the timer on the first typed character."""
+    if not sys.stdin.isatty():
+        start = time.perf_counter()
+        typed = input("> ")
+        return typed, max(time.perf_counter() - start, 0.0)
+
+    if os.name == "nt":
+        return capture_typed_line_windows()
+
+    return capture_typed_line_posix()
 
 
 def run_round(round_number: int, word_count: int, level: str) -> RoundResult:

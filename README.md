@@ -8,6 +8,7 @@ A terminal program to practice typing speed with adaptive difficulty and feedbac
 
 - Each round immediately shows the target words.
 - Timing begins on your first typed character (not before).
+- Windows and POSIX terminals are both supported.
 
 ### Run
 
