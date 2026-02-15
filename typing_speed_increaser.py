@@ -250,15 +250,25 @@ def load_key_stats(path: str) -> dict[str, KeyTimingStats]:
             key = row.get("key", "").lower()
             if key not in stats:
                 continue
+            try:
+                attempts = int(row.get("attempts", 0))
+                total_seconds = float(row.get("total_seconds", 0.0))
+                errors = int(row.get("errors", 0))
+            except (TypeError, ValueError):
+                continue
             stats[key] = KeyTimingStats(
-                attempts=int(row.get("attempts", 0)),
-                total_seconds=float(row.get("total_seconds", 0.0)),
-                errors=int(row.get("errors", 0)),
+                attempts=attempts,
+                total_seconds=total_seconds,
+                errors=errors,
             )
     return stats
 
 
 def save_key_stats(path: str, stats: dict[str, KeyTimingStats]) -> None:
+    directory = os.path.dirname(path)
+    if directory:
+        os.makedirs(directory, exist_ok=True)
+
     with open(path, "w", newline="", encoding="utf-8") as csv_file:
         writer = csv.DictWriter(csv_file, fieldnames=["key", "attempts", "total_seconds", "errors"])
         writer.writeheader()
@@ -367,13 +377,20 @@ def run_mode2(args: argparse.Namespace) -> None:
     stats = load_key_stats(args.mode2_stats_file)
     results: list[LetterResult] = []
 
+    # Create the stats CSV immediately so progress is not lost on interruption.
+    save_key_stats(args.mode2_stats_file, stats)
+
     print("\nMode 2: single-key reaction trainer")
     print("Type only the shown key each time.")
 
     for i in range(1, args.mode2_drills + 1):
         target = choose_weighted_letter(stats)
         print(f"\nDrill {i}/{args.mode2_drills} -> press: {target}")
-        typed, elapsed = capture_single_key()
+        try:
+            typed, elapsed = capture_single_key()
+        except (EOFError, KeyboardInterrupt):
+            print("\nInput interrupted. Saving progress and ending session.")
+            break
         typed_key = typed.lower()
         result = LetterResult(target=target, typed=typed_key, elapsed_seconds=elapsed)
         results.append(result)
@@ -390,6 +407,8 @@ def run_mode2(args: argparse.Namespace) -> None:
         else:
             typed_display = typed_key if typed_key else "[empty]"
             print(f"Miss. You pressed '{typed_display}'. ({elapsed:.3f}s)")
+
+        save_key_stats(args.mode2_stats_file, stats)
 
     save_key_stats(args.mode2_stats_file, stats)
     print_mode2_summary(results, stats, args.mode2_stats_file)
@@ -420,7 +439,11 @@ def main() -> None:
         random.seed(args.seed)
 
     print("Typing Speed Increaser")
-    mode = select_mode(args.mode)
+    try:
+        mode = select_mode(args.mode)
+    except (EOFError, KeyboardInterrupt):
+        print("\nInput interrupted. Exiting.")
+        return
 
     if mode == 1:
         print("Type exactly what you see, then press Enter.")
