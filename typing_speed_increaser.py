@@ -132,6 +132,9 @@ def capture_typed_line_posix() -> tuple[str, float]:
         tty.setraw(fd)
         while True:
             char = sys.stdin.read(1)
+            if char == "\x03":
+                print()
+                raise KeyboardInterrupt
             if char in ("\r", "\n"):
                 print()
                 break
