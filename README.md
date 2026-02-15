@@ -6,6 +6,9 @@ the first of its kind
 
 A terminal program to practice typing speed with adaptive difficulty and feedback.
 
+- Each round immediately shows the target words.
+- Timing begins on your first typed character (not before).
+
 ### Run
 
 ```bash

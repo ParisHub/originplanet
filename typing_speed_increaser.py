@@ -5,8 +5,11 @@ from __future__ import annotations
 
 import argparse
 import random
+import sys
+import termios
 import textwrap
 import time
+import tty
 from dataclasses import dataclass
 
 WORD_BANK = {
@@ -81,14 +84,47 @@ def finger_focus(result: RoundResult) -> str:
     return f"Focus drill: practice these keys slowly for 2 minutes -> {drill}."
 
 
+def capture_typed_line() -> tuple[str, float]:
+    """Read one typed line; start the timer on the first typed character."""
+    if not sys.stdin.isatty():
+        start = time.perf_counter()
+        typed = input("> ")
+        return typed, max(time.perf_counter() - start, 0.0)
+
+    fd = sys.stdin.fileno()
+    old_settings = termios.tcgetattr(fd)
+    typed_chars: list[str] = []
+    started_at: float | None = None
+
+    print("> ", end="", flush=True)
+    try:
+        tty.setraw(fd)
+        while True:
+            char = sys.stdin.read(1)
+            if char in ("\r", "\n"):
+                print()
+                break
+            if char == "\x7f":
+                if typed_chars:
+                    typed_chars.pop()
+                    print("\b \b", end="", flush=True)
+                continue
+            if started_at is None:
+                started_at = time.perf_counter()
+            typed_chars.append(char)
+            print(char, end="", flush=True)
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+
+    elapsed = 0.0 if started_at is None else time.perf_counter() - started_at
+    return "".join(typed_chars), elapsed
+
+
 def run_round(round_number: int, word_count: int, level: str) -> RoundResult:
     target = build_prompt(word_count, level)
     print(f"\nRound {round_number} [{level.upper()}]")
     print(textwrap.fill(target, width=72))
-    input("Press Enter to start typing... ")
-    start = time.perf_counter()
-    typed = input("> ")
-    elapsed = time.perf_counter() - start
+    typed, elapsed = capture_typed_line()
     return RoundResult(target=target, typed=typed, elapsed_seconds=elapsed)
 
 
