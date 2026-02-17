@@ -60,15 +60,32 @@
 
     #launcherButtons {
       display: flex;
-      flex-wrap: wrap;
+      flex-direction: column;
       gap: 8px;
       margin-top: 10px;
+    }
+
+    .launcher-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .launcher-item {
       background: #e8f1ff;
       border: 1px solid #9dbbff;
       border-radius: 6px;
+      min-width: 180px;
+      text-align: left;
+    }
+
+    .delete-item {
+      background: #ffeaea;
+      border: 1px solid #ff8f8f;
+      color: #7a0000;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 12px;
     }
 
     #createDialog {
@@ -104,8 +121,18 @@
       min-height: 18px;
       margin-bottom: 6px;
     }
+
+    #launcherStatus {
+      font-size: 12px;
+      color: #555;
+      margin-top: 6px;
+      min-height: 16px;
+    }
   </style>
   <script language="javascript">
+    var launcherEntries = [];
+    var nextEntryId = 1;
+
     function sayHello() {
       document.getElementById("msg").innerText = "Hello";
     }
@@ -113,6 +140,7 @@
     function openLauncher() {
       document.getElementById("homePanel").style.display = "none";
       document.getElementById("launcherPanel").style.display = "block";
+      setLauncherStatus("Loaded " + launcherEntries.length + " entr" + (launcherEntries.length === 1 ? "y" : "ies") + ".");
     }
 
     function showCreateDialog() {
@@ -129,25 +157,92 @@
     }
 
     function createLauncherButton() {
-      var name = document.getElementById("appName").value.replace(/^\s+|\s+$/g, "");
-      var folderPath = document.getElementById("folderPath").value.replace(/^\s+|\s+$/g, "");
+      var name = trimValue(document.getElementById("appName").value);
+      var folderPath = trimValue(document.getElementById("folderPath").value);
 
       if (!name || !folderPath) {
         document.getElementById("createError").innerText = "Please provide both name and folder path.";
         return;
       }
 
-      var button = document.createElement("button");
-      button.className = "launcher-item";
-      button.innerText = name;
-      button.title = folderPath;
-      button.setAttribute("data-path", folderPath);
-      button.onclick = function () {
-        launchPath(folderPath);
-      };
+      launcherEntries.push({
+        id: nextEntryId++,
+        name: name,
+        folderPath: folderPath
+      });
 
-      document.getElementById("launcherButtons").appendChild(button);
+      renderLauncherEntries();
+      saveLauncherEntries();
       hideCreateDialog();
+      setLauncherStatus("Added launcher entry: " + name);
+    }
+
+    function removeLauncherEntry(entryId) {
+      var idx = -1;
+      var removedName = "";
+      var i;
+
+      for (i = 0; i < launcherEntries.length; i++) {
+        if (launcherEntries[i].id === entryId) {
+          idx = i;
+          removedName = launcherEntries[i].name;
+          break;
+        }
+      }
+
+      if (idx === -1) {
+        setLauncherStatus("Entry not found.");
+        return;
+      }
+
+      if (!confirm("Delete launcher entry '" + removedName + "'?")) {
+        return;
+      }
+
+      launcherEntries.splice(idx, 1);
+      renderLauncherEntries();
+      saveLauncherEntries();
+      setLauncherStatus("Deleted launcher entry: " + removedName);
+    }
+
+    function renderLauncherEntries() {
+      var container = document.getElementById("launcherButtons");
+      var i;
+      var row;
+      var launchBtn;
+      var deleteBtn;
+
+      container.innerHTML = "";
+
+      if (!launcherEntries.length) {
+        container.innerHTML = "<div>No entries yet. Click Create to add one.</div>";
+        return;
+      }
+
+      for (i = 0; i < launcherEntries.length; i++) {
+        row = document.createElement("div");
+        row.className = "launcher-row";
+
+        launchBtn = document.createElement("button");
+        launchBtn.className = "launcher-item";
+        launchBtn.innerText = launcherEntries[i].name;
+        launchBtn.title = launcherEntries[i].folderPath;
+        launchBtn.onclick = (function(path) {
+          return function() { launchPath(path); };
+        })(launcherEntries[i].folderPath);
+
+        deleteBtn = document.createElement("button");
+        deleteBtn.className = "delete-item";
+        deleteBtn.innerText = "Delete";
+        deleteBtn.title = "Delete this launcher entry";
+        deleteBtn.onclick = (function(id) {
+          return function() { removeLauncherEntry(id); };
+        })(launcherEntries[i].id);
+
+        row.appendChild(launchBtn);
+        row.appendChild(deleteBtn);
+        container.appendChild(row);
+      }
     }
 
     function launchPath(path) {
@@ -158,6 +253,112 @@
         alert("Could not open folder path: " + path);
       }
     }
+
+    function getDataFilePath() {
+      var fso = new ActiveXObject("Scripting.FileSystemObject");
+      var currentPath = decodePath(window.location.pathname);
+      var folderPath = fso.GetParentFolderName(currentPath);
+      return fso.BuildPath(folderPath, "launcher_entries.txt");
+    }
+
+    function saveLauncherEntries() {
+      try {
+        var fso = new ActiveXObject("Scripting.FileSystemObject");
+        var dataPath = getDataFilePath();
+        var stream = fso.CreateTextFile(dataPath, true, false);
+        var i;
+
+        for (i = 0; i < launcherEntries.length; i++) {
+          stream.WriteLine(escapeValue(launcherEntries[i].name) + "|" + escapeValue(launcherEntries[i].folderPath));
+        }
+
+        stream.Close();
+      } catch (e) {
+        setLauncherStatus("Could not save entries. " + e.message);
+      }
+    }
+
+    function loadLauncherEntries() {
+      try {
+        var fso = new ActiveXObject("Scripting.FileSystemObject");
+        var dataPath = getDataFilePath();
+        var stream;
+        var line;
+        var sep;
+        var name;
+        var folderPath;
+
+        launcherEntries = [];
+        nextEntryId = 1;
+
+        if (!fso.FileExists(dataPath)) {
+          renderLauncherEntries();
+          return;
+        }
+
+        stream = fso.OpenTextFile(dataPath, 1, false, 0);
+
+        while (!stream.AtEndOfStream) {
+          line = stream.ReadLine();
+          sep = line.indexOf("|");
+          if (sep < 0) {
+            continue;
+          }
+
+          name = unescapeValue(line.substring(0, sep));
+          folderPath = unescapeValue(line.substring(sep + 1));
+
+          if (name && folderPath) {
+            launcherEntries.push({
+              id: nextEntryId++,
+              name: name,
+              folderPath: folderPath
+            });
+          }
+        }
+
+        stream.Close();
+      } catch (e) {
+        setLauncherStatus("Could not load entries. " + e.message);
+      }
+
+      renderLauncherEntries();
+    }
+
+    function setLauncherStatus(message) {
+      document.getElementById("launcherStatus").innerText = message;
+    }
+
+    function trimValue(value) {
+      return value.replace(/^\s+|\s+$/g, "");
+    }
+
+    function escapeValue(value) {
+      return value
+        .replace(/\\/g, "\\\\")
+        .replace(/\|/g, "\\|")
+        .replace(/\r/g, "")
+        .replace(/\n/g, "\\n");
+    }
+
+    function unescapeValue(value) {
+      return value
+        .replace(/\\n/g, "\n")
+        .replace(/\\\|/g, "|")
+        .replace(/\\\\/g, "\\");
+    }
+
+    function decodePath(pathValue) {
+      var path = decodeURIComponent(pathValue).replace(/\//g, "\\");
+      if (path.charAt(0) === "\\" && path.charAt(2) === ":") {
+        path = path.substring(1);
+      }
+      return path;
+    }
+
+    window.onload = function() {
+      loadLauncherEntries();
+    };
   </script>
 </head>
 <body>
@@ -197,6 +398,7 @@
     </div>
 
     <div id="launcherButtons"></div>
+    <div id="launcherStatus"></div>
   </div>
 </body>
 </html>

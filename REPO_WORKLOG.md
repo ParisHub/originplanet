@@ -142,3 +142,77 @@ Implemented an in-window App Launcher flow in `windows_hello.hta` with these con
 
 - Confirmed file edit contents via local file inspection and diff review.
 - No automated runtime test harness exists in this repository for HTA UI; behavior validation is based on deterministic DOM/script logic in source.
+
+## 2026-02-17 — Launcher entry deletion + persistence pass
+
+### 1) Request interpreted
+
+Follow-up implementation goals:
+
+- Add a way to delete launcher entries from the in-window launcher UI.
+- Make launcher entries persistent across app restarts.
+- Keep the design in the same HTA window and maintain the existing create flow.
+
+### 2) Persistence design decision
+
+Chose a **separate data file** in the same folder as the HTA:
+
+- File name: `launcher_entries.txt`
+- Format: one line per entry, `escapedName|escapedFolderPath`
+- Why this approach:
+  - keeps data separate from executable UI code
+  - avoids self-modifying `.hta` file edits (safer/cleaner maintenance)
+  - straightforward file IO in HTA via `Scripting.FileSystemObject`
+
+### 3) Implementation details in `windows_hello.hta`
+
+#### Data model + lifecycle
+
+- Added in-memory state:
+  - `launcherEntries` array
+  - `nextEntryId` counter
+- Added startup loading:
+  - `window.onload` calls `loadLauncherEntries()`
+  - existing entries are read from `launcher_entries.txt` and rendered immediately
+
+#### Entry creation and rendering
+
+- Reworked creation flow so it appends objects to `launcherEntries` (instead of creating one-off DOM buttons directly).
+- Added `renderLauncherEntries()` to rebuild launcher UI from state.
+- Added status line (`launcherStatus`) for user-facing feedback.
+
+#### Deletion support
+
+- Each launcher row now renders:
+  - launch button (entry name)
+  - `Delete` button
+- Added `removeLauncherEntry(entryId)`:
+  - confirms delete with `confirm(...)`
+  - removes entry from in-memory array
+  - re-renders list
+  - persists updated file
+
+#### Disk persistence helpers
+
+- Added `getDataFilePath()` to resolve `launcher_entries.txt` next to the `.hta` file.
+- Added `saveLauncherEntries()` and `loadLauncherEntries()` using `Scripting.FileSystemObject`.
+- Added value encoding helpers:
+  - `escapeValue(...)`
+  - `unescapeValue(...)`
+- Added path normalization helper:
+  - `decodePath(...)` to convert HTA URL path into Windows path format for FileSystemObject operations.
+
+### 4) UX updates
+
+- Launcher entries are now rendered as row items with explicit delete affordance.
+- Added `launcherStatus` text area to surface load/save/add/delete feedback.
+- Empty state now displays: “No entries yet. Click Create to add one.”
+
+### 5) Validation performed
+
+- Verified source-level correctness by reviewing full updated HTA file and checking key function wiring:
+  - startup load
+  - create -> render -> save chain
+  - delete -> render -> save chain
+- Performed `git diff --check` to ensure clean formatting.
+- There is no automated HTA runtime test harness in this repository; runtime behavior still needs manual validation inside an HTA-capable Windows environment.
