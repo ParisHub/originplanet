@@ -255,3 +255,35 @@ Likely failure points in the previous implementation:
 - Verified modified file paths and helper wiring through source inspection.
 - Ran `git diff --check` to ensure clean patch formatting.
 - Verified expected file rename is tracked by Git.
+
+## 2026-02-17 — Home navigation + Apple-style delete mode
+
+### 1) Request interpreted
+
+Follow-up UX changes requested:
+
+1. Add a `Home` button from launcher view back to the home/start screen.
+2. Replace always-visible per-entry delete controls with a single top toggle button (Apple-style edit/delete mode) that reveals/hides delete buttons for all entries.
+
+### 2) Implementation approach
+
+- Introduce global `deleteMode` state (default `false`).
+- Add `Home` button in launcher header row.
+- Add `Delete` toggle button in launcher header row:
+  - toggles `deleteMode`
+  - updates button label to `Done` while active
+  - causes re-render so per-entry delete buttons are conditionally shown/hidden.
+- Keep deletion confirmation logic as-is once delete mode is active and user taps an item delete control.
+
+### 3) Additional maintenance while editing
+
+- Removed duplicate `var folderPath` declaration in `getDataFilePath()` to keep function clean and reduce future confusion.
+
+### 4) Validation plan
+
+- Confirm source wiring for:
+  - launcher -> home navigation
+  - delete toggle label/state transitions
+  - conditional delete button rendering
+- Run `git diff --check`.
+- Attempt screenshot capture with browser tool (expected limitations in this environment may still apply).

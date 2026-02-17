@@ -80,6 +80,7 @@
     }
 
     .delete-item {
+      display: none;
       background: #ffeaea;
       border: 1px solid #ff8f8f;
       color: #7a0000;
@@ -132,6 +133,7 @@
   <script language="javascript">
     var launcherEntries = [];
     var nextEntryId = 1;
+    var deleteMode = false;
 
     function sayHello() {
       document.getElementById("msg").innerText = "Hello";
@@ -140,7 +142,35 @@
     function openLauncher() {
       document.getElementById("homePanel").style.display = "none";
       document.getElementById("launcherPanel").style.display = "block";
+      deleteMode = false;
+      updateDeleteToggleButton();
+      renderLauncherEntries();
       setLauncherStatus("Loaded " + launcherEntries.length + " entr" + (launcherEntries.length === 1 ? "y" : "ies") + ".");
+    }
+
+    function goHome() {
+      deleteMode = false;
+      updateDeleteToggleButton();
+      hideCreateDialog();
+      document.getElementById("launcherPanel").style.display = "none";
+      document.getElementById("homePanel").style.display = "block";
+      setLauncherStatus("");
+    }
+
+    function toggleDeleteMode() {
+      deleteMode = !deleteMode;
+      updateDeleteToggleButton();
+      renderLauncherEntries();
+      setLauncherStatus(deleteMode ? "Delete mode enabled." : "Delete mode disabled.");
+    }
+
+    function updateDeleteToggleButton() {
+      var toggleBtn = document.getElementById("toggleDeleteButton");
+      if (!toggleBtn) {
+        return;
+      }
+      toggleBtn.innerText = deleteMode ? "Done" : "Delete";
+      toggleBtn.title = deleteMode ? "Exit delete mode" : "Enter delete mode";
     }
 
     function showCreateDialog() {
@@ -233,6 +263,7 @@
 
         deleteBtn = document.createElement("button");
         deleteBtn.className = "delete-item";
+        deleteBtn.style.display = deleteMode ? "inline-block" : "none";
         deleteBtn.innerText = "Delete";
         deleteBtn.title = "Delete this launcher entry";
         deleteBtn.onclick = (function(id) {
@@ -414,6 +445,7 @@
     }
 
     window.onload = function() {
+      updateDeleteToggleButton();
       loadLauncherEntries();
     };
   </script>
@@ -433,6 +465,8 @@
     <div class="row">
       <strong>App Launcher</strong>
       <button onclick="showCreateDialog()">Create</button>
+      <button id="toggleDeleteButton" onclick="toggleDeleteMode()">Delete</button>
+      <button onclick="goHome()">Home</button>
     </div>
 
     <div id="createDialog">
