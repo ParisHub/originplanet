@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Windows 10 Hello App</title>
+  <HTA:APPLICATION
+    ID="WinHello"
+    APPLICATIONNAME="Windows 10 Hello App"
+    BORDER="dialog"
+    CAPTION="yes"
+    SHOWINTASKBAR="yes"
+    SINGLEINSTANCE="yes"
+    SYSMENU="yes"
+    SCROLL="no"
+    WINDOWSTATE="normal"
+  />
+  <style>
+    body {
+      font-family: Segoe UI, Tahoma, sans-serif;
+      margin: 0;
+      padding: 28px;
+      background: linear-gradient(160deg, #f1f6ff 0%, #eaf0ff 45%, #f7efff 100%);
+      color: #1c2435;
+    }
+
+    h3 {
+      margin: 0 0 14px 0;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      color: #22314d;
+    }
+
+    .subtitle {
+      margin: 0 0 18px 0;
+      font-size: 13px;
+      color: #5a6787;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid #d9e2ff;
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 10px 30px rgba(39, 61, 120, 0.12);
+      backdrop-filter: blur(2px);
+    }
+
+    button {
+      padding: 8px 14px;
+      font-size: 13px;
+      border-radius: 10px;
+      border: 1px solid #b8c6ef;
+      background: linear-gradient(180deg, #ffffff 0%, #edf2ff 100%);
+      color: #22314d;
+      cursor: pointer;
+      transition: transform 0.06s ease, box-shadow 0.15s ease;
+    }
+
+    button:hover {
+      box-shadow: 0 3px 10px rgba(61, 89, 168, 0.25);
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    .primary {
+      border-color: #3e6cf5;
+      background: linear-gradient(180deg, #4b78ff 0%, #3f66da 100%);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .ghost {
+      background: #f5f7ff;
+    }
+
+    .danger {
+      border-color: #ff8a9e;
+      background: linear-gradient(180deg, #ffe7ec 0%, #ffd7df 100%);
+      color: #7c1129;
+    }
+
+    #msg {
+      min-width: 120px;
+      font-size: 14px;
+      color: #0f7a3f;
+      font-weight: 700;
+      background: #e9fff3;
+      border: 1px solid #b7ebcc;
+      border-radius: 999px;
+      padding: 4px 10px;
+      min-height: 18px;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    #launcherPanel {
+      display: none;
+      margin-top: 14px;
+    }
+
+    #launcherButtons {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .launcher-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #f8faff;
+      border: 1px solid #dce6ff;
+      border-radius: 12px;
+      padding: 7px;
+    }
+
+    .launcher-item {
+      background: linear-gradient(180deg, #f7fbff 0%, #e8f1ff 100%);
+      border: 1px solid #9dbbff;
+      border-radius: 9px;
+      min-width: 220px;
+      text-align: left;
+      font-weight: 600;
+    }
+
+    .delete-item {
+      display: none;
+      border-radius: 9px;
+      padding: 7px 11px;
+      font-size: 12px;
+    }
+
+    #createDialog {
+      display: none;
+      margin-top: 14px;
+      padding: 14px;
+      border: 1px solid #d5def8;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #fcfdff 0%, #f5f8ff 100%);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+
+    .form-row {
+      margin-bottom: 10px;
+    }
+
+    .form-row label {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #3a4c76;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .form-row input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 8px;
+      font-size: 13px;
+      border-radius: 9px;
+      border: 1px solid #c9d6ff;
+      background: #fff;
+    }
+
+    #createError {
+      color: #b01537;
+      font-size: 13px;
+      min-height: 18px;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    #launcherStatus {
+      font-size: 12px;
+      color: #4c5878;
+      margin-top: 8px;
+      min-height: 16px;
+      padding-left: 2px;
+    }
+
+    .panel-title {
+      font-weight: 700;
+      font-size: 18px;
+      color: #2a3a61;
+    }
+  </style>
+  <script language="javascript">
+    var launcherEntries = [];
+    var nextEntryId = 1;
+    var deleteMode = false;
+    var activeDataFilePath = "";
+
+    function sayHello() {
+      document.getElementById("msg").innerText = "Hello";
+    }
+
+    function openLauncher() {
+      document.getElementById("homePanel").style.display = "none";
+      document.getElementById("launcherPanel").style.display = "block";
+      deleteMode = false;
+      updateDeleteToggleButton();
+      renderLauncherEntries();
+      setLauncherStatus("Loaded " + launcherEntries.length + " entr" + (launcherEntries.length === 1 ? "y" : "ies") + ".");
+    }
+
+    function goHome() {
+      deleteMode = false;
+      updateDeleteToggleButton();
+      hideCreateDialog();
+      document.getElementById("launcherPanel").style.display = "none";
+      document.getElementById("homePanel").style.display = "block";
+      setLauncherStatus("");
+    }
+
+    function toggleDeleteMode() {
+      deleteMode = !deleteMode;
+      updateDeleteToggleButton();
+      renderLauncherEntries();
+      setLauncherStatus(deleteMode ? "Delete mode enabled." : "Delete mode disabled.");
+    }
+
+    function updateDeleteToggleButton() {
+      var toggleBtn = document.getElementById("toggleDeleteButton");
+      if (!toggleBtn) {
+        return;
+      }
+      toggleBtn.innerText = deleteMode ? "Done" : "Delete";
+      toggleBtn.title = deleteMode ? "Exit delete mode" : "Enter delete mode";
+    }
+
+    function showCreateDialog() {
+      document.getElementById("createDialog").style.display = "block";
+      document.getElementById("createError").innerText = "";
+      document.getElementById("appName").focus();
+    }
+
+    function hideCreateDialog() {
+      document.getElementById("createDialog").style.display = "none";
+      document.getElementById("createError").innerText = "";
+      document.getElementById("appName").value = "";
+      document.getElementById("folderPath").value = "";
+    }
+
+    function createLauncherButton() {
+      var name = trimValue(document.getElementById("appName").value);
+      var folderPath = trimValue(document.getElementById("folderPath").value);
+
+      if (!name || !folderPath) {
+        document.getElementById("createError").innerText = "Please provide both name and folder path.";
+        return;
+      }
+
+      launcherEntries.push({
+        id: nextEntryId++,
+        name: name,
+        folderPath: folderPath
+      });
+
+      renderLauncherEntries();
+      saveLauncherEntries();
+      hideCreateDialog();
+      setLauncherStatus("Added launcher entry: " + name);
+    }
+
+    function removeLauncherEntry(entryId) {
+      var idx = -1;
+      var removedName = "";
+      var i;
+
+      for (i = 0; i < launcherEntries.length; i++) {
+        if (launcherEntries[i].id === entryId) {
+          idx = i;
+          removedName = launcherEntries[i].name;
+          break;
+        }
+      }
+
+      if (idx === -1) {
+        setLauncherStatus("Entry not found.");
+        return;
+      }
+
+      if (!confirm("Delete launcher entry '" + removedName + "'?")) {
+        return;
+      }
+
+      launcherEntries.splice(idx, 1);
+      renderLauncherEntries();
+      saveLauncherEntries();
+      setLauncherStatus("Deleted launcher entry: " + removedName);
+    }
+
+    function renderLauncherEntries() {
+      var container = document.getElementById("launcherButtons");
+      var i;
+      var row;
+      var launchBtn;
+      var deleteBtn;
+
+      container.innerHTML = "";
+
+      if (!launcherEntries.length) {
+        container.innerHTML = "<div>No entries yet. Click Create to add one.</div>";
+        return;
+      }
+
+      for (i = 0; i < launcherEntries.length; i++) {
+        row = document.createElement("div");
+        row.className = "launcher-row";
+
+        launchBtn = document.createElement("button");
+        launchBtn.className = "launcher-item";
+        launchBtn.innerText = launcherEntries[i].name;
+        launchBtn.title = launcherEntries[i].folderPath;
+        launchBtn.onclick = (function(path) {
+          return function() { launchPath(path); };
+        })(launcherEntries[i].folderPath);
+
+        deleteBtn = document.createElement("button");
+        deleteBtn.className = "delete-item danger";
+        deleteBtn.style.display = deleteMode ? "inline-block" : "none";
+        deleteBtn.innerText = "Delete";
+        deleteBtn.title = "Delete this launcher entry";
+        deleteBtn.onclick = (function(id) {
+          return function() { removeLauncherEntry(id); };
+        })(launcherEntries[i].id);
+
+        row.appendChild(launchBtn);
+        row.appendChild(deleteBtn);
+        container.appendChild(row);
+      }
+    }
+
+    function launchPath(path) {
+      try {
+        var shell = new ActiveXObject("WScript.Shell");
+        shell.Run('explorer "' + path + '"');
+      } catch (e) {
+        alert("Could not open folder path: " + path);
+      }
+    }
+
+    function getDataFilePath() {
+      var candidates = getDataFilePathCandidates();
+      return candidates.length ? candidates[0] : "launcher_entries.txt";
+    }
+
+    function getDataFilePathCandidates() {
+      var fso = new ActiveXObject("Scripting.FileSystemObject");
+      var results = [];
+
+      addCandidatePath(results, fso, getPathFromPathname());
+      addCandidatePath(results, fso, getCurrentFilePath());
+      addCandidatePath(results, fso, getCurrentDirectoryFallback() + "\\originplanet.hta");
+
+      return results;
+    }
+
+    function addCandidatePath(results, fso, filePath) {
+      var folderPath;
+
+      if (!filePath) {
+        return;
+      }
+
+      folderPath = fso.GetParentFolderName(filePath);
+      if (!folderPath || folderPath === "") {
+        return;
+      }
+
+      pushUnique(results, fso.BuildPath(folderPath, "launcher_entries.txt"));
+    }
+
+    function pushUnique(list, value) {
+      var i;
+
+      for (i = 0; i < list.length; i++) {
+        if (list[i].toLowerCase() === value.toLowerCase()) {
+          return;
+        }
+      }
+
+      list.push(value);
+    }
+
+    function saveLauncherEntries() {
+      try {
+        var fso = new ActiveXObject("Scripting.FileSystemObject");
+        var dataPath = activeDataFilePath || getDataFilePath();
+        var stream = fso.CreateTextFile(dataPath, true, false);
+        var i;
+
+        for (i = 0; i < launcherEntries.length; i++) {
+          stream.WriteLine(escapeValue(launcherEntries[i].name) + "|" + escapeValue(launcherEntries[i].folderPath));
+        }
+
+        stream.Close();
+      } catch (e) {
+        setLauncherStatus("Could not save entries. " + e.message);
+      }
+    }
+
+    function loadLauncherEntries() {
+      try {
+        var fso = new ActiveXObject("Scripting.FileSystemObject");
+        var candidates = getDataFilePathCandidates();
+        var dataPath = "";
+        var stream;
+        var line;
+        var sep;
+        var name;
+        var folderPath;
+        var i;
+
+        launcherEntries = [];
+        nextEntryId = 1;
+
+        for (i = 0; i < candidates.length; i++) {
+          if (fso.FileExists(candidates[i])) {
+            dataPath = candidates[i];
+            break;
+          }
+        }
+
+        activeDataFilePath = dataPath || (candidates.length ? candidates[0] : "launcher_entries.txt");
+
+        if (!dataPath) {
+          renderLauncherEntries();
+          return;
+        }
+
+        stream = fso.OpenTextFile(dataPath, 1, false, 0);
+
+        while (!stream.AtEndOfStream) {
+          line = stream.ReadLine();
+          sep = splitEscapedPair(line);
+          if (!sep) {
+            continue;
+          }
+
+          name = unescapeValue(sep.left);
+          folderPath = unescapeValue(sep.right);
+
+          if (name && folderPath) {
+            launcherEntries.push({
+              id: nextEntryId++,
+              name: name,
+              folderPath: folderPath
+            });
+          }
+        }
+
+        stream.Close();
+      } catch (e) {
+        setLauncherStatus("Could not load entries. " + e.message);
+      }
+
+      renderLauncherEntries();
+    }
+
+    function setLauncherStatus(message) {
+      document.getElementById("launcherStatus").innerText = message;
+    }
+
+    function trimValue(value) {
+      return value.replace(/^\s+|\s+$/g, "");
+    }
+
+    function escapeValue(value) {
+      return value
+        .replace(/\\/g, "\\\\")
+        .replace(/\|/g, "\\|")
+        .replace(/\r/g, "")
+        .replace(/\n/g, "\\n");
+    }
+
+    function unescapeValue(value) {
+      return value
+        .replace(/\\n/g, "\n")
+        .replace(/\\\|/g, "|")
+        .replace(/\\\\/g, "\\");
+    }
+
+    function splitEscapedPair(value) {
+      var i;
+      var escaped = false;
+
+      for (i = 0; i < value.length; i++) {
+        if (escaped) {
+          escaped = false;
+          continue;
+        }
+
+        if (value.charAt(i) === "\\") {
+          escaped = true;
+          continue;
+        }
+
+        if (value.charAt(i) === "|") {
+          return {
+            left: value.substring(0, i),
+            right: value.substring(i + 1)
+          };
+        }
+      }
+
+      return null;
+    }
+
+    function getPathFromPathname() {
+      var pathname = String(window.location.pathname || "");
+      var path = decodeUriValue(pathname).replace(/\//g, "\\");
+
+      if (path.charAt(0) === "\\" && path.length > 2 && path.charAt(2) === ":") {
+        path = path.substring(1);
+      }
+
+      return path;
+    }
+
+    function getCurrentFilePath() {
+      var href = String(window.location.href || "");
+      var path = href;
+
+      if (href.toLowerCase().indexOf("file:///") === 0) {
+        path = href.substring(8);
+      }
+
+      path = decodeUriValue(path).replace(/\//g, "\\");
+
+      if (path.charAt(0) === "\\" && path.length > 2 && path.charAt(2) === ":") {
+        path = path.substring(1);
+      }
+
+      return path;
+    }
+
+    function decodeUriValue(value) {
+      try {
+        return decodeURIComponent(value);
+      } catch (e) {
+        return unescape(value);
+      }
+    }
+
+    function getCurrentDirectoryFallback() {
+      try {
+        var shell = new ActiveXObject("WScript.Shell");
+        return shell.CurrentDirectory;
+      } catch (e) {
+        return ".";
+      }
+    }
+
+    window.onload = function() {
+      updateDeleteToggleButton();
+      loadLauncherEntries();
+    };
+  </script>
+</head>
+<body>
+  <h3>OriginPlanet Launcher</h3>
+  <p class="subtitle">A tiny in-window launcher with persistent shortcuts.</p>
+
+  <div id="homePanel" class="panel">
+    <div class="row">
+      <button class="primary" onclick="sayHello()">Press me</button>
+      <span id="msg"></span>
+    </div>
+    <button class="primary" onclick="openLauncher()">Open App Launcher</button>
+  </div>
+
+  <div id="launcherPanel" class="panel">
+    <div class="row">
+      <span class="panel-title">App Launcher</span>
+      <button class="primary" onclick="showCreateDialog()">Create</button>
+      <button id="toggleDeleteButton" class="ghost" onclick="toggleDeleteMode()">Delete</button>
+      <button class="ghost" onclick="goHome()">Home</button>
+    </div>
+
+    <div id="createDialog">
+      <div class="form-row">
+        <label for="appName">App Name</label>
+        <input id="appName" type="text" placeholder="Example: Work Docs" />
+      </div>
+
+      <div class="form-row">
+        <label for="folderPath">Folder Path</label>
+        <input id="folderPath" type="text" placeholder="Example: C:\\Users\\You\\Documents" />
+      </div>
+
+      <div id="createError"></div>
+
+      <div class="row">
+        <button class="primary" onclick="createLauncherButton()">Confirm</button>
+        <button class="ghost" onclick="hideCreateDialog()">Cancel</button>
+      </div>
+    </div>
+
+    <div id="launcherButtons"></div>
+    <div id="launcherStatus"></div>
+  </div>
+</body>
+</html>
