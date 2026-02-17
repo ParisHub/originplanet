@@ -16,20 +16,20 @@ the first of its kind
 
 ## Windows mini app implementation log
 
-Implemented `windows_hello.hta`:
+Implemented `originplanet.hta`:
 
 - Uses the built-in `mshta.exe` host available on standard Windows installs.
 - Defines a compact window with simple default Windows-like controls and Segoe UI font.
 - Adds a **Press me** button and a neighboring output label.
-- Wires the button to a VBScript handler (`SayHello`) that sets the label text to `Hello`.
+- Wires the button to a script handler that sets the label text to `Hello`.
 
 ### How to run (Windows)
 
-1. Copy `windows_hello.hta` to a Windows 10 machine.
+1. Copy `originplanet.hta` to a Windows 10 machine.
 2. Double-click the file, or run from cmd:
 
 ```bat
-mshta.exe windows_hello.hta
+mshta.exe originplanet.hta
 ```
 
 This opens a small window; pressing the button shows **Hello** next to it.

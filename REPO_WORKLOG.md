@@ -216,3 +216,42 @@ Chose a **separate data file** in the same folder as the HTA:
   - delete -> render -> save chain
 - Performed `git diff --check` to ensure clean formatting.
 - There is no automated HTA runtime test harness in this repository; runtime behavior still needs manual validation inside an HTA-capable Windows environment.
+
+## 2026-02-17 — Persistence reload fix + HTA rename to `originplanet.hta`
+
+### 1) Request interpreted
+
+Addressed two follow-up issues:
+
+1. Existing `launcher_entries.txt` data was not reliably reloading after closing/reopening the HTA.
+2. Rename app file from `windows_hello.hta` to `originplanet.hta`.
+
+### 2) Root-cause notes for reload issue
+
+Likely failure points in the previous implementation:
+
+- Data-file path resolution depended on `window.location.pathname` assumptions that are brittle in HTA host path formats.
+- Line parsing used `indexOf("|")`, which can split incorrectly when escaped pipes are present.
+
+### 3) Fixes implemented in `originplanet.hta`
+
+- Renamed file via git move:
+  - `windows_hello.hta` -> `originplanet.hta`
+- Hardened data path resolution:
+  - Added `getCurrentFilePath()` based on `window.location.href`.
+  - Added `decodeUriValue(...)` with fallback to `unescape(...)`.
+  - Added fallback directory resolver `getCurrentDirectoryFallback()` via `WScript.Shell.CurrentDirectory`.
+  - Updated `getDataFilePath()` to use the robust path helpers.
+- Hardened entry line parsing:
+  - Replaced naive delimiter split with `splitEscapedPair(...)` that locates first **unescaped** pipe.
+  - Updated loader to consume parsed `{ left, right }` pair.
+
+### 4) Documentation updates
+
+- Updated `README.md` run instructions and implementation references to use `originplanet.hta`.
+
+### 5) Validation performed
+
+- Verified modified file paths and helper wiring through source inspection.
+- Ran `git diff --check` to ensure clean patch formatting.
+- Verified expected file rename is tracked by Git.

@@ -256,8 +256,13 @@
 
     function getDataFilePath() {
       var fso = new ActiveXObject("Scripting.FileSystemObject");
-      var currentPath = decodePath(window.location.pathname);
+      var currentPath = getCurrentFilePath();
       var folderPath = fso.GetParentFolderName(currentPath);
+
+      if (!folderPath || folderPath === "") {
+        folderPath = getCurrentDirectoryFallback();
+      }
+
       return fso.BuildPath(folderPath, "launcher_entries.txt");
     }
 
@@ -300,13 +305,13 @@
 
         while (!stream.AtEndOfStream) {
           line = stream.ReadLine();
-          sep = line.indexOf("|");
-          if (sep < 0) {
+          sep = splitEscapedPair(line);
+          if (!sep) {
             continue;
           }
 
-          name = unescapeValue(line.substring(0, sep));
-          folderPath = unescapeValue(line.substring(sep + 1));
+          name = unescapeValue(sep.left);
+          folderPath = unescapeValue(sep.right);
 
           if (name && folderPath) {
             launcherEntries.push({
@@ -348,12 +353,64 @@
         .replace(/\\\\/g, "\\");
     }
 
-    function decodePath(pathValue) {
-      var path = decodeURIComponent(pathValue).replace(/\//g, "\\");
-      if (path.charAt(0) === "\\" && path.charAt(2) === ":") {
+    function splitEscapedPair(value) {
+      var i;
+      var escaped = false;
+
+      for (i = 0; i < value.length; i++) {
+        if (escaped) {
+          escaped = false;
+          continue;
+        }
+
+        if (value.charAt(i) === "\\") {
+          escaped = true;
+          continue;
+        }
+
+        if (value.charAt(i) === "|") {
+          return {
+            left: value.substring(0, i),
+            right: value.substring(i + 1)
+          };
+        }
+      }
+
+      return null;
+    }
+
+    function getCurrentFilePath() {
+      var href = String(window.location.href || "");
+      var path = href;
+
+      if (href.toLowerCase().indexOf("file:///") === 0) {
+        path = href.substring(8);
+      }
+
+      path = decodeUriValue(path).replace(/\//g, "\\");
+
+      if (path.charAt(0) === "\\" && path.length > 2 && path.charAt(2) === ":") {
         path = path.substring(1);
       }
+
       return path;
+    }
+
+    function decodeUriValue(value) {
+      try {
+        return decodeURIComponent(value);
+      } catch (e) {
+        return unescape(value);
+      }
+    }
+
+    function getCurrentDirectoryFallback() {
+      try {
+        var shell = new ActiveXObject("WScript.Shell");
+        return shell.CurrentDirectory;
+      } catch (e) {
+        return ".";
+      }
     }
 
     window.onload = function() {
