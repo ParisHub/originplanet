@@ -203,14 +203,23 @@
     var nextEntryId = 1;
     var deleteMode = false;
     var activeDataFilePath = "";
+    var pathCandidatesCache = null;
+
+    function el(id) {
+      return document.getElementById(id);
+    }
+
+    function setVisible(id, isVisible) {
+      el(id).style.display = isVisible ? "block" : "none";
+    }
 
     function sayHello() {
-      document.getElementById("msg").innerText = "Hello";
+      el("msg").innerText = "Hello";
     }
 
     function openLauncher() {
-      document.getElementById("homePanel").style.display = "none";
-      document.getElementById("launcherPanel").style.display = "block";
+      setVisible("homePanel", false);
+      setVisible("launcherPanel", true);
       deleteMode = false;
       updateDeleteToggleButton();
       renderLauncherEntries();
@@ -221,8 +230,8 @@
       deleteMode = false;
       updateDeleteToggleButton();
       hideCreateDialog();
-      document.getElementById("launcherPanel").style.display = "none";
-      document.getElementById("homePanel").style.display = "block";
+      setVisible("launcherPanel", false);
+      setVisible("homePanel", true);
       setLauncherStatus("");
     }
 
@@ -234,7 +243,7 @@
     }
 
     function updateDeleteToggleButton() {
-      var toggleBtn = document.getElementById("toggleDeleteButton");
+      var toggleBtn = el("toggleDeleteButton");
       if (!toggleBtn) {
         return;
       }
@@ -243,24 +252,24 @@
     }
 
     function showCreateDialog() {
-      document.getElementById("createDialog").style.display = "block";
-      document.getElementById("createError").innerText = "";
-      document.getElementById("appName").focus();
+      setVisible("createDialog", true);
+      el("createError").innerText = "";
+      el("appName").focus();
     }
 
     function hideCreateDialog() {
-      document.getElementById("createDialog").style.display = "none";
-      document.getElementById("createError").innerText = "";
-      document.getElementById("appName").value = "";
-      document.getElementById("folderPath").value = "";
+      setVisible("createDialog", false);
+      el("createError").innerText = "";
+      el("appName").value = "";
+      el("folderPath").value = "";
     }
 
     function createLauncherButton() {
-      var name = trimValue(document.getElementById("appName").value);
-      var folderPath = trimValue(document.getElementById("folderPath").value);
+      var name = trimValue(el("appName").value);
+      var folderPath = trimValue(el("folderPath").value);
 
       if (!name || !folderPath) {
-        document.getElementById("createError").innerText = "Please provide both name and folder path.";
+        el("createError").innerText = "Please provide both name and folder path.";
         return;
       }
 
@@ -305,7 +314,8 @@
     }
 
     function renderLauncherEntries() {
-      var container = document.getElementById("launcherButtons");
+      var container = el("launcherButtons");
+      var fragment = document.createDocumentFragment();
       var i;
       var row;
       var launchBtn;
@@ -341,12 +351,21 @@
 
         row.appendChild(launchBtn);
         row.appendChild(deleteBtn);
-        container.appendChild(row);
+        fragment.appendChild(row);
       }
+
+      container.appendChild(fragment);
     }
 
     function launchPath(path) {
       try {
+        var fso = new ActiveXObject("Scripting.FileSystemObject");
+
+        if (!fso.FolderExists(path) && !fso.FileExists(path)) {
+          setLauncherStatus("Path not found: " + path);
+          return;
+        }
+
         var shell = new ActiveXObject("WScript.Shell");
         shell.Run('explorer "' + path + '"');
       } catch (e) {
@@ -360,13 +379,20 @@
     }
 
     function getDataFilePathCandidates() {
-      var fso = new ActiveXObject("Scripting.FileSystemObject");
+      var fso;
       var results = [];
+
+      if (pathCandidatesCache && pathCandidatesCache.length) {
+        return pathCandidatesCache.slice(0);
+      }
+
+      fso = new ActiveXObject("Scripting.FileSystemObject");
 
       addCandidatePath(results, fso, getPathFromPathname());
       addCandidatePath(results, fso, getCurrentFilePath());
       addCandidatePath(results, fso, getCurrentDirectoryFallback() + "\\originplanet.hta");
 
+      pathCandidatesCache = results.slice(0);
       return results;
     }
 
@@ -473,7 +499,7 @@
     }
 
     function setLauncherStatus(message) {
-      document.getElementById("launcherStatus").innerText = message;
+      el("launcherStatus").innerText = message;
     }
 
     function trimValue(value) {
@@ -569,6 +595,20 @@
     window.onload = function() {
       updateDeleteToggleButton();
       loadLauncherEntries();
+
+      el("appName").onkeypress = function(evt) {
+        evt = evt || window.event;
+        if (evt.keyCode === 13) {
+          createLauncherButton();
+        }
+      };
+
+      el("folderPath").onkeypress = function(evt) {
+        evt = evt || window.event;
+        if (evt.keyCode === 13) {
+          createLauncherButton();
+        }
+      };
     };
   </script>
 </head>
