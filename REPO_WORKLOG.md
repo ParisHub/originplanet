@@ -316,3 +316,55 @@ The previous single-path strategy could miss the real startup location depending
 - Re-checked script syntax by extracting the embedded JavaScript and parsing with Node.
 - Ran `git diff --check` to ensure patch quality.
 - Confirmed expected files changed (`originplanet.hta`, `REPO_WORKLOG.md`).
+
+## 2026-02-17 — Visual polish pass ("make it really pretty")
+
+### 1) Request interpreted
+
+User requested a strong visual polish of the HTA app while keeping existing launcher functionality.
+
+### 2) Styling overhaul applied
+
+Performed a full UI refresh focused on a modern soft-card look:
+
+- Reworked page shell:
+  - gradient app background
+  - larger title typography and descriptive subtitle
+- Updated panel surface:
+  - rounded corners
+  - softer border color
+  - deeper shadow and light glass-like appearance
+- Modernized button system:
+  - shared rounded shape, gradient fill, hover shadow, pressed state
+  - semantic button variants:
+    - `.primary`
+    - `.ghost`
+    - `.danger`
+- Improved launcher entry visuals:
+  - each entry row rendered as a subtle card row
+  - launcher buttons styled to look like tappable tiles
+  - delete buttons styled with danger treatment while preserving delete-mode behavior
+- Improved form UX styling:
+  - uppercase labels with stronger hierarchy
+  - rounded, cleaner inputs
+  - refined create dialog panel look
+- Refined feedback badges/text:
+  - `#msg` now rendered as a pill-style success indicator
+  - launcher status text color/spacing adjusted
+
+### 3) Markup/class updates (non-functional)
+
+- Updated heading text to `OriginPlanet Launcher` and added subtitle.
+- Added button utility classes in markup for visual consistency.
+- Replaced plain launcher section label with `.panel-title`.
+
+### 4) Functional safety
+
+- JavaScript launcher behavior intentionally kept intact (create, delete mode, home navigation, persistence logic).
+- Styling changes were scoped to CSS + class attributes to avoid behavior regressions.
+
+### 5) Validation performed
+
+- Parsed embedded JavaScript with Node to ensure no syntax regressions.
+- Ran `git diff --check` for patch formatting.
+- Attempted screenshot capture through browser tool (environment still blocks local file path access).
