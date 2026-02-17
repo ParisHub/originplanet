@@ -59,3 +59,37 @@ Execution notes:
 - `windows_hello.hta`
 
 `docs/` now contains all discovered `.csv` and `.txt` files.
+
+## 2026-02-17 — Follow-up cleanup after review feedback
+
+### 1) Request implemented
+
+Follow-up request was to:
+
+1. Delete the typing Python program (`typing_speed_increaser.py`).
+2. Move `.c` and `.lisp` files into a folder named `bad programs`.
+
+### 2) Execution details
+
+Actions performed:
+
+- Created folder: `bad programs/`
+- Moved:
+  - `main.c` -> `bad programs/main.c`
+  - `helloworld.lisp` -> `bad programs/helloworld.lisp`
+- Deleted:
+  - `typing_speed_increaser.py`
+
+Additional maintenance for future consistency:
+
+- Updated `README.md` to remove stale run instructions for the deleted Python typing tool.
+- Added a short “Repository status notes” section describing the cleanup outcome.
+
+### 3) Post-change repository shape
+
+Top-level now focuses on:
+
+- `windows_hello.hta` as the active runnable app in this repo
+- `docs/` for text/csv data files
+- `bad programs/` for archived `.c`/`.lisp` experiments
+- `REPO_WORKLOG.md` as the running maintenance log
