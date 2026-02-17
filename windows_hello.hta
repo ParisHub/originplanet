@@ -21,33 +21,182 @@
       background: #f0f0f0;
       color: #222;
     }
+
+    h3 {
+      margin-top: 0;
+    }
+
     .row {
       display: flex;
       align-items: center;
       gap: 10px;
+      margin-bottom: 12px;
     }
+
+    .panel {
+      background: #fff;
+      border: 1px solid #d0d0d0;
+      border-radius: 8px;
+      padding: 14px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
     button {
       padding: 6px 12px;
       font-size: 14px;
+      cursor: pointer;
     }
+
     #msg {
       min-width: 120px;
       font-size: 14px;
       color: #006400;
       font-weight: 600;
     }
+
+    #launcherPanel {
+      display: none;
+    }
+
+    #launcherButtons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .launcher-item {
+      background: #e8f1ff;
+      border: 1px solid #9dbbff;
+      border-radius: 6px;
+    }
+
+    #createDialog {
+      display: none;
+      margin-top: 12px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background: #fafafa;
+    }
+
+    .form-row {
+      margin-bottom: 8px;
+    }
+
+    .form-row label {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .form-row input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 6px;
+      font-size: 13px;
+    }
+
+    #createError {
+      color: #a10000;
+      font-size: 13px;
+      min-height: 18px;
+      margin-bottom: 6px;
+    }
   </style>
-  <script language="VBScript">
-    Sub SayHello
-      Document.getElementById("msg").innerText = "Hello"
-    End Sub
+  <script language="javascript">
+    function sayHello() {
+      document.getElementById("msg").innerText = "Hello";
+    }
+
+    function openLauncher() {
+      document.getElementById("homePanel").style.display = "none";
+      document.getElementById("launcherPanel").style.display = "block";
+    }
+
+    function showCreateDialog() {
+      document.getElementById("createDialog").style.display = "block";
+      document.getElementById("createError").innerText = "";
+      document.getElementById("appName").focus();
+    }
+
+    function hideCreateDialog() {
+      document.getElementById("createDialog").style.display = "none";
+      document.getElementById("createError").innerText = "";
+      document.getElementById("appName").value = "";
+      document.getElementById("folderPath").value = "";
+    }
+
+    function createLauncherButton() {
+      var name = document.getElementById("appName").value.replace(/^\s+|\s+$/g, "");
+      var folderPath = document.getElementById("folderPath").value.replace(/^\s+|\s+$/g, "");
+
+      if (!name || !folderPath) {
+        document.getElementById("createError").innerText = "Please provide both name and folder path.";
+        return;
+      }
+
+      var button = document.createElement("button");
+      button.className = "launcher-item";
+      button.innerText = name;
+      button.title = folderPath;
+      button.setAttribute("data-path", folderPath);
+      button.onclick = function () {
+        launchPath(folderPath);
+      };
+
+      document.getElementById("launcherButtons").appendChild(button);
+      hideCreateDialog();
+    }
+
+    function launchPath(path) {
+      try {
+        var shell = new ActiveXObject("WScript.Shell");
+        shell.Run('explorer "' + path + '"');
+      } catch (e) {
+        alert("Could not open folder path: " + path);
+      }
+    }
   </script>
 </head>
 <body>
   <h3>Simple Windows 10-Style HTA App</h3>
-  <div class="row">
-    <button onclick="SayHello">Press me</button>
-    <span id="msg"></span>
+
+  <div id="homePanel" class="panel">
+    <div class="row">
+      <button onclick="sayHello()">Press me</button>
+      <span id="msg"></span>
+    </div>
+    <button onclick="openLauncher()">Open App Launcher</button>
+  </div>
+
+  <div id="launcherPanel" class="panel">
+    <div class="row">
+      <strong>App Launcher</strong>
+      <button onclick="showCreateDialog()">Create</button>
+    </div>
+
+    <div id="createDialog">
+      <div class="form-row">
+        <label for="appName">App Name</label>
+        <input id="appName" type="text" placeholder="Example: Work Docs" />
+      </div>
+
+      <div class="form-row">
+        <label for="folderPath">Folder Path</label>
+        <input id="folderPath" type="text" placeholder="Example: C:\\Users\\You\\Documents" />
+      </div>
+
+      <div id="createError"></div>
+
+      <div class="row">
+        <button onclick="createLauncherButton()">Confirm</button>
+        <button onclick="hideCreateDialog()">Cancel</button>
+      </div>
+    </div>
+
+    <div id="launcherButtons"></div>
   </div>
 </body>
 </html>

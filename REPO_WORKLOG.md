@@ -93,3 +93,52 @@ Top-level now focuses on:
 - `docs/` for text/csv data files
 - `bad programs/` for archived `.c`/`.lisp` experiments
 - `REPO_WORKLOG.md` as the running maintenance log
+
+## 2026-02-17 — HTA app launcher feature pass
+
+### 1) Request interpreted
+
+Implemented an in-window App Launcher flow in `windows_hello.hta` with these constraints:
+
+- Keep using the first HTA window (no second window created).
+- Do **not** embed launcher controls into the existing home/start content directly.
+- Add a button on the initial panel that opens the launcher view.
+- Inside launcher view, add a `Create` action that opens a small context dialog area.
+- Dialog accepts:
+  - display name
+  - folder path
+- Confirm action adds a launcher button in the launcher view.
+
+### 2) UI and behavior changes made
+
+- Reworked HTA page into two panels:
+  - `homePanel`: original hello interaction + new `Open App Launcher` button.
+  - `launcherPanel`: hidden by default and shown only after opening launcher.
+- Added `Create` button inside launcher panel.
+- Added inline dialog (`createDialog`) with:
+  - `App Name` field
+  - `Folder Path` field
+  - `Confirm` and `Cancel` actions
+  - inline validation error area
+- Implemented button creation behavior:
+  - trims inputs
+  - validates both fields are non-empty
+  - appends a new launcher button to the launcher button area
+  - stores folder path as metadata/title for reference
+- Implemented launch behavior for created buttons:
+  - attempts to open folder path through `WScript.Shell` + `explorer`
+  - shows alert if launching fails
+
+### 3) Internal implementation notes for future edits
+
+- Script language changed to JavaScript (`<script language="javascript">`) to simplify dynamic DOM creation and event handlers.
+- Existing hello behavior preserved via `sayHello()`.
+- Dialog is not a separate OS window; it is a contextual inline container toggled in the launcher panel.
+- Entry persistence is currently in-memory only (session-scoped). If persistence is needed later, consider:
+  - writing to local file through `Scripting.FileSystemObject`, or
+  - storing in registry/profile-backed storage depending on HTA deployment constraints.
+
+### 4) Validation performed
+
+- Confirmed file edit contents via local file inspection and diff review.
+- No automated runtime test harness exists in this repository for HTA UI; behavior validation is based on deterministic DOM/script logic in source.
