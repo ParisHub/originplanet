@@ -134,6 +134,7 @@
     var launcherEntries = [];
     var nextEntryId = 1;
     var deleteMode = false;
+    var activeDataFilePath = "";
 
     function sayHello() {
       document.getElementById("msg").innerText = "Hello";
@@ -286,21 +287,52 @@
     }
 
     function getDataFilePath() {
-      var fso = new ActiveXObject("Scripting.FileSystemObject");
-      var currentPath = getCurrentFilePath();
-      var folderPath = fso.GetParentFolderName(currentPath);
+      var candidates = getDataFilePathCandidates();
+      return candidates.length ? candidates[0] : "launcher_entries.txt";
+    }
 
-      if (!folderPath || folderPath === "") {
-        folderPath = getCurrentDirectoryFallback();
+    function getDataFilePathCandidates() {
+      var fso = new ActiveXObject("Scripting.FileSystemObject");
+      var results = [];
+
+      addCandidatePath(results, fso, getPathFromPathname());
+      addCandidatePath(results, fso, getCurrentFilePath());
+      addCandidatePath(results, fso, getCurrentDirectoryFallback() + "\\originplanet.hta");
+
+      return results;
+    }
+
+    function addCandidatePath(results, fso, filePath) {
+      var folderPath;
+
+      if (!filePath) {
+        return;
       }
 
-      return fso.BuildPath(folderPath, "launcher_entries.txt");
+      folderPath = fso.GetParentFolderName(filePath);
+      if (!folderPath || folderPath === "") {
+        return;
+      }
+
+      pushUnique(results, fso.BuildPath(folderPath, "launcher_entries.txt"));
+    }
+
+    function pushUnique(list, value) {
+      var i;
+
+      for (i = 0; i < list.length; i++) {
+        if (list[i].toLowerCase() === value.toLowerCase()) {
+          return;
+        }
+      }
+
+      list.push(value);
     }
 
     function saveLauncherEntries() {
       try {
         var fso = new ActiveXObject("Scripting.FileSystemObject");
-        var dataPath = getDataFilePath();
+        var dataPath = activeDataFilePath || getDataFilePath();
         var stream = fso.CreateTextFile(dataPath, true, false);
         var i;
 
@@ -317,17 +349,28 @@
     function loadLauncherEntries() {
       try {
         var fso = new ActiveXObject("Scripting.FileSystemObject");
-        var dataPath = getDataFilePath();
+        var candidates = getDataFilePathCandidates();
+        var dataPath = "";
         var stream;
         var line;
         var sep;
         var name;
         var folderPath;
+        var i;
 
         launcherEntries = [];
         nextEntryId = 1;
 
-        if (!fso.FileExists(dataPath)) {
+        for (i = 0; i < candidates.length; i++) {
+          if (fso.FileExists(candidates[i])) {
+            dataPath = candidates[i];
+            break;
+          }
+        }
+
+        activeDataFilePath = dataPath || (candidates.length ? candidates[0] : "launcher_entries.txt");
+
+        if (!dataPath) {
           renderLauncherEntries();
           return;
         }
@@ -408,6 +451,17 @@
       }
 
       return null;
+    }
+
+    function getPathFromPathname() {
+      var pathname = String(window.location.pathname || "");
+      var path = decodeUriValue(pathname).replace(/\//g, "\\");
+
+      if (path.charAt(0) === "\\" && path.length > 2 && path.charAt(2) === ":") {
+        path = path.substring(1);
+      }
+
+      return path;
     }
 
     function getCurrentFilePath() {

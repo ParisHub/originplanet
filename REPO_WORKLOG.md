@@ -287,3 +287,32 @@ Follow-up UX changes requested:
   - conditional delete button rendering
 - Run `git diff --check`.
 - Attempt screenshot capture with browser tool (expected limitations in this environment may still apply).
+
+## 2026-02-17 — Reload reliability hotfix after user retest
+
+### 1) Problem report
+
+User retest indicated persisted launcher entries still were not reloading after reopening the HTA.
+
+### 2) Additional hardening implemented
+
+Updated persistence path handling to resolve common HTA path inconsistencies across runtime contexts:
+
+- Added `activeDataFilePath` state so save operations continue using the same discovered file path that load resolved.
+- Added candidate-based path discovery (`getDataFilePathCandidates()`):
+  1. `window.location.pathname`-derived file path
+  2. `window.location.href`-derived file path
+  3. `WScript.Shell.CurrentDirectory` fallback
+- Added candidate deduplication helper (`pushUnique(...)`).
+- Updated loader to choose the first existing candidate path and remember it as active path.
+- Updated saver to prefer `activeDataFilePath` when writing updates.
+
+### 3) Why this should fix the observed behavior
+
+The previous single-path strategy could miss the real startup location depending on HTA host/path format. Candidate probing + remembered active path makes load/save converge on the same `launcher_entries.txt` location more consistently across reopen cycles.
+
+### 4) Validation performed
+
+- Re-checked script syntax by extracting the embedded JavaScript and parsing with Node.
+- Ran `git diff --check` to ensure patch quality.
+- Confirmed expected files changed (`originplanet.hta`, `REPO_WORKLOG.md`).
