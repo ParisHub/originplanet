@@ -574,3 +574,70 @@ Follow-up request had two concrete implementation goals:
   - verified save/load now routes through unified obfuscated persistence path,
   - verified new clipboard-copy flow wiring.
 - Further runtime validation recommended in HTA host on Windows to verify clipboard behavior in target environment.
+
+## 2026-02-18 — Data ownership note + TXT import/export module
+
+### 1) Request interpreted
+
+Follow-up requirements were:
+
+1. Add an explicit note that `.opdb` is user-specific and should not be treated as a shared hand-edited file.
+2. Keep existing `.opdb` handling behavior unchanged (so app updates remain distributable while each colleague keeps their local `.opdb`).
+3. Add another module to export/import between `.opdb` and a human-readable `.txt` format.
+
+### 2) Scope and non-change guarantee
+
+I intentionally **did not alter** the underlying `.opdb` path/discovery/write mechanics (`getDataFilePathCandidates`, `getDataFilePath`, `saveAllEntries`, `loadAllEntries`).
+
+Result:
+
+- each user's `.opdb` still lives next to their app copy,
+- app updates can be distributed independently,
+- existing local data compatibility behavior remains intact.
+
+### 3) New module: Data Import / Export
+
+#### A) Navigation and panel
+
+- Added a home button: `Open Data Import / Export`.
+- Added new panel `dataToolsPanel` containing:
+  - a maintenance note about `.opdb` ownership/use,
+  - one path input for readable text file target/source,
+  - `Export to TXT` and `Import from TXT` actions,
+  - status line (`dataToolsStatus`).
+
+#### B) Export behavior
+
+- New function: `exportDataToTxt()`.
+- Output includes comment header lines plus typed records:
+  - `L|escapedName|escapedPath`
+  - `S|escapedName|escapedContent`
+- Export file is intentionally readable and editable.
+
+#### C) Import behavior
+
+- New function: `importDataFromTxt()`.
+- Reads selected `.txt`, ignores blank/comment lines (`#...`), parses typed record lines, then:
+  - rehydrates launcher/snippet in-memory state,
+  - re-renders both modules,
+  - persists imported state back into `.opdb` via existing save path.
+
+#### D) Default path helper
+
+- New helper: `getDefaultTxtPath()`:
+  - derives a nearby `.txt` path from active `.opdb` path where possible,
+  - falls back to `originplanet_export.txt`.
+
+### 4) Explicit user-specific note placement
+
+Added on-screen note in Data Import / Export panel:
+
+- `.opdb` is user-specific, should stay beside each user's app,
+- avoid sharing/manual editing of `.opdb`,
+- use export/import `.txt` for readable transfer.
+
+### 5) Validation notes
+
+- Verified new panel wiring and function references through source inspection.
+- Confirmed `.opdb` core file handling functions were left intact.
+- Recommended runtime HTA validation on Windows for final operational confirmation in target host.

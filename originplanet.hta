@@ -108,7 +108,8 @@
     }
 
     #launcherPanel,
-    #snippetPanel {
+    #snippetPanel,
+    #dataToolsPanel {
       display: none;
       margin-top: 14px;
     }
@@ -209,7 +210,8 @@
     }
 
     #launcherStatus,
-    #snippetStatus {
+    #snippetStatus,
+    #dataToolsStatus {
       font-size: 12px;
       color: #4c5878;
       margin-top: 8px;
@@ -222,6 +224,17 @@
       font-size: 18px;
       color: #2a3a61;
     }
+
+    .info-note {
+      margin: 10px 0 12px 0;
+      font-size: 12px;
+      color: #4b5878;
+      background: #f3f7ff;
+      border: 1px solid #d9e4ff;
+      border-radius: 9px;
+      padding: 8px 10px;
+    }
+
   </style>
   <script language="javascript">
     var launcherEntries = [];
@@ -250,6 +263,7 @@
     function openLauncher() {
       setVisible("homePanel", false);
       setVisible("snippetPanel", false);
+      setVisible("dataToolsPanel", false);
       setVisible("launcherPanel", true);
       launcherDeleteMode = false;
       updateLauncherDeleteToggleButton();
@@ -260,11 +274,23 @@
     function openSnippetPanel() {
       setVisible("homePanel", false);
       setVisible("launcherPanel", false);
+      setVisible("dataToolsPanel", false);
       setVisible("snippetPanel", true);
       snippetDeleteMode = false;
       updateSnippetDeleteToggleButton();
       renderSnippetEntries();
       setSnippetStatus("Loaded " + snippetEntries.length + " snippet" + (snippetEntries.length === 1 ? "" : "s") + ".");
+    }
+
+
+
+    function openDataToolsPanel() {
+      setVisible("homePanel", false);
+      setVisible("launcherPanel", false);
+      setVisible("snippetPanel", false);
+      setVisible("dataToolsPanel", true);
+      el("dataTxtPath").value = getDefaultTxtPath();
+      setDataToolsStatus("Use Export to create a readable .txt or Import to load from one.");
     }
 
     function goHome() {
@@ -276,9 +302,11 @@
       hideSnippetCreateDialog();
       setVisible("launcherPanel", false);
       setVisible("snippetPanel", false);
+      setVisible("dataToolsPanel", false);
       setVisible("homePanel", true);
       setLauncherStatus("");
       setSnippetStatus("");
+      setDataToolsStatus("");
     }
 
     function toggleDeleteMode() {
@@ -795,12 +823,114 @@
       return out;
     }
 
+
+
+    function exportDataToTxt() {
+      var txtPath = trimValue(el("dataTxtPath").value);
+      var lines;
+      var stream;
+
+      if (!txtPath) {
+        setDataToolsStatus("Please provide a .txt path for export.");
+        return;
+      }
+
+      try {
+        lines = [];
+        lines.push("# OriginPlanet readable export");
+        lines.push("# This file is editable and importable.");
+        lines.push("# Keep .opdb files user-specific and avoid sharing/editing .opdb directly.");
+        lines.push("# Format: L|escapedName|escapedPath and S|escapedName|escapedContent");
+        lines.push(serializeAllEntries());
+
+        stream = new ActiveXObject("Scripting.FileSystemObject").CreateTextFile(txtPath, true, false);
+        stream.Write(lines.join("\r\n"));
+        stream.Close();
+
+        setDataToolsStatus("Exported readable data to: " + txtPath);
+      } catch (e) {
+        setDataToolsStatus("Export failed. " + e.message);
+      }
+    }
+
+    function importDataFromTxt() {
+      var txtPath = trimValue(el("dataTxtPath").value);
+      var fso;
+      var stream;
+      var raw;
+      var normalized;
+      var lines;
+      var filtered;
+      var i;
+
+      if (!txtPath) {
+        setDataToolsStatus("Please provide a .txt path for import.");
+        return;
+      }
+
+      try {
+        fso = new ActiveXObject("Scripting.FileSystemObject");
+
+        if (!fso.FileExists(txtPath)) {
+          setDataToolsStatus("Import file not found: " + txtPath);
+          return;
+        }
+
+        stream = fso.OpenTextFile(txtPath, 1, false, 0);
+        raw = stream.ReadAll();
+        stream.Close();
+
+        normalized = String(raw || "").replace(/\r/g, "");
+        lines = normalized.split("\n");
+        filtered = [];
+
+        for (i = 0; i < lines.length; i++) {
+          if (!lines[i]) {
+            continue;
+          }
+
+          if (lines[i].charAt(0) === "#") {
+            continue;
+          }
+
+          filtered.push(lines[i]);
+        }
+
+        deserializeAllEntries(filtered.join("\n"));
+        renderLauncherEntries();
+        renderSnippetEntries();
+        saveAllEntries();
+
+        setDataToolsStatus("Imported data from: " + txtPath);
+      } catch (e) {
+        setDataToolsStatus("Import failed. " + e.message);
+      }
+    }
+
+    function getDefaultTxtPath() {
+      var opdbPath = activeDataFilePath || getDataFilePath();
+
+      if (!opdbPath) {
+        return "originplanet_export.txt";
+      }
+
+      if (/\.opdb$/i.test(opdbPath)) {
+        return opdbPath.replace(/\.opdb$/i, ".txt");
+      }
+
+      return opdbPath + ".txt";
+    }
+
     function setLauncherStatus(message) {
       el("launcherStatus").innerText = message;
     }
 
     function setSnippetStatus(message) {
       el("snippetStatus").innerText = message;
+    }
+
+    function setDataToolsStatus(message) {
+      el("dataToolsStatus").innerText = message;
     }
 
     function trimValue(value) {
@@ -944,6 +1074,7 @@
     <div class="row">
       <button class="primary" onclick="openLauncher()">Open App Launcher</button>
       <button class="primary" onclick="openSnippetPanel()">Open Clipboard Snippets</button>
+      <button class="ghost" onclick="openDataToolsPanel()">Open Data Import / Export</button>
     </div>
   </div>
 
@@ -1012,5 +1143,32 @@
     <div id="snippetButtons"></div>
     <div id="snippetStatus"></div>
   </div>
+
+  <div id="dataToolsPanel" class="panel">
+    <div class="row">
+      <span class="panel-title">Data Import / Export</span>
+      <div class="snippet-header-actions">
+        <button class="ghost" onclick="goHome()">Home</button>
+      </div>
+    </div>
+
+    <div class="info-note">
+      Note for future maintenance: <strong>the <code>.opdb</code> file is user-specific and should stay next to each user's app copy.</strong>
+      Do not share or manually edit <code>.opdb</code>; use export/import <code>.txt</code> for readable transfer.
+    </div>
+
+    <div class="form-row">
+      <label for="dataTxtPath">Readable TXT Path</label>
+      <input id="dataTxtPath" type="text" placeholder="Example: C:\\Users\\You\\Documents\\originplanet_export.txt" />
+    </div>
+
+    <div class="row">
+      <button class="primary" onclick="exportDataToTxt()">Export to TXT</button>
+      <button class="primary" onclick="importDataFromTxt()">Import from TXT</button>
+    </div>
+
+    <div id="dataToolsStatus"></div>
+  </div>
+
 </body>
 </html>
