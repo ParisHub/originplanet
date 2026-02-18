@@ -489,3 +489,88 @@ Why:
   - button sizing rules are present,
   - `.launcher-item` fixed min-width has been removed.
 - This repository has no automated UI test harness for HTA rendering; visual validation should be done in HTA runtime.
+
+## 2026-02-18 — Obfuscated persistence + Clipboard Snippets app
+
+### 1) Request interpreted
+
+Follow-up request had two concrete implementation goals:
+
+1. Replace plain-text entry storage with a less directly readable data format.
+2. Add a second in-window app (parallel to App Launcher) for named text snippets where clicking a button copies its content to clipboard, with Create/Delete/Home controls similar to launcher flow.
+
+### 2) Persistence redesign (single obfuscated data file)
+
+#### A) File strategy
+
+- Replaced cleartext `launcher_entries.txt` style persistence with a single application data file:
+  - `originplanet_data.opdb`
+- Both app launch entries and clipboard snippet entries are saved in this file.
+
+#### B) Data model serialization
+
+- Introduced unified serialization format in-memory before writing:
+  - launcher rows serialized as: `L|escapedName|escapedPath`
+  - snippet rows serialized as: `S|escapedName|escapedContent`
+- Existing escaping rules are reused for separators/newlines/backslashes.
+
+#### C) Obfuscation layer
+
+- Added `obfuscateData(...)` and `deobfuscateData(...)`:
+  - payload prefixed with `OPDB1:`
+  - body stored as XOR-mixed hex stream using a local key + position-based variation
+- Intent:
+  - produce a file that is not human-readable at a glance in a text editor,
+  - maintain deterministic decode behavior without external dependencies.
+
+#### D) Compatibility behavior
+
+- Decoder falls back gracefully if prefix is missing (treats input as plain text), so older plain payloads don't instantly crash load path.
+
+### 3) New feature: Clipboard Snippets app
+
+#### A) Navigation/UI structure
+
+- Added a second launch button on home panel:
+  - `Open Clipboard Snippets`
+- Added new panel `snippetPanel` with title, header actions, and list area:
+  - `Create`
+  - `Delete`/`Done` toggle
+  - `Home`
+
+#### B) Create dialog and fields
+
+- Added `snippetCreateDialog` with:
+  - `snippetName` (input)
+  - `snippetContent` (textarea)
+  - `Confirm` / `Cancel`
+- Validation requires both name and content.
+
+#### C) Runtime behavior
+
+- Snippet buttons are generated dynamically like launcher rows.
+- Clicking a snippet button copies its associated text to clipboard.
+- Copy implementation:
+  - primary path: `window.clipboardData.setData("Text", content)` (HTA/IE-host friendly)
+  - fallback path: hidden textarea + `document.execCommand("copy")`
+- Deletion flow mirrors launcher delete mode with confirmation dialogs.
+
+### 4) Shared logic refactor notes
+
+- Replaced launcher-only save/load with shared functions:
+  - `saveAllEntries()`
+  - `loadAllEntries()`
+  - `serializeAllEntries()` / `deserializeAllEntries()`
+- Added separate state for launcher and snippet modules:
+  - entries arrays
+  - next-id counters
+  - delete-mode flags
+  - status outputs
+
+### 5) Validation notes
+
+- Source-level validation:
+  - checked that both panels render and use independent controls/status lines,
+  - verified save/load now routes through unified obfuscated persistence path,
+  - verified new clipboard-copy flow wiring.
+- Further runtime validation recommended in HTA host on Windows to verify clipboard behavior in target environment.

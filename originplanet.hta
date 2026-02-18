@@ -107,19 +107,22 @@
       align-items: center;
     }
 
-    #launcherPanel {
+    #launcherPanel,
+    #snippetPanel {
       display: none;
       margin-top: 14px;
     }
 
-    #launcherButtons {
+    #launcherButtons,
+    #snippetButtons {
       display: flex;
       flex-direction: column;
       gap: 8px;
       margin-top: 10px;
     }
 
-    .launcher-row {
+    .launcher-row,
+    .snippet-row {
       display: flex;
       align-items: center;
       gap: 8px;
@@ -129,7 +132,8 @@
       padding: 7px;
     }
 
-    .launcher-item {
+    .launcher-item,
+    .snippet-item {
       background: linear-gradient(180deg, #f7fbff 0%, #e8f1ff 100%);
       border: 1px solid #9dbbff;
       border-radius: 9px;
@@ -138,7 +142,8 @@
       font-weight: 600;
     }
 
-    .launcher-header-actions {
+    .launcher-header-actions,
+    .snippet-header-actions {
       display: inline-flex;
       align-items: center;
       gap: 8px;
@@ -152,7 +157,8 @@
       font-size: 12px;
     }
 
-    #createDialog {
+    #createDialog,
+    #snippetCreateDialog {
       display: none;
       margin-top: 14px;
       padding: 14px;
@@ -176,7 +182,8 @@
       letter-spacing: 0.3px;
     }
 
-    .form-row input {
+    .form-row input,
+    .form-row textarea {
       width: 100%;
       box-sizing: border-box;
       padding: 8px;
@@ -184,9 +191,16 @@
       border-radius: 9px;
       border: 1px solid #c9d6ff;
       background: #fff;
+      font-family: inherit;
     }
 
-    #createError {
+    .form-row textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    #createError,
+    #snippetCreateError {
       color: #b01537;
       font-size: 13px;
       min-height: 18px;
@@ -194,7 +208,8 @@
       font-weight: 600;
     }
 
-    #launcherStatus {
+    #launcherStatus,
+    #snippetStatus {
       font-size: 12px;
       color: #4c5878;
       margin-top: 8px;
@@ -210,8 +225,13 @@
   </style>
   <script language="javascript">
     var launcherEntries = [];
-    var nextEntryId = 1;
-    var deleteMode = false;
+    var nextLauncherEntryId = 1;
+    var launcherDeleteMode = false;
+
+    var snippetEntries = [];
+    var nextSnippetEntryId = 1;
+    var snippetDeleteMode = false;
+
     var activeDataFilePath = "";
     var pathCandidatesCache = null;
 
@@ -229,36 +249,68 @@
 
     function openLauncher() {
       setVisible("homePanel", false);
+      setVisible("snippetPanel", false);
       setVisible("launcherPanel", true);
-      deleteMode = false;
-      updateDeleteToggleButton();
+      launcherDeleteMode = false;
+      updateLauncherDeleteToggleButton();
       renderLauncherEntries();
       setLauncherStatus("Loaded " + launcherEntries.length + " entr" + (launcherEntries.length === 1 ? "y" : "ies") + ".");
     }
 
-    function goHome() {
-      deleteMode = false;
-      updateDeleteToggleButton();
-      hideCreateDialog();
+    function openSnippetPanel() {
+      setVisible("homePanel", false);
       setVisible("launcherPanel", false);
+      setVisible("snippetPanel", true);
+      snippetDeleteMode = false;
+      updateSnippetDeleteToggleButton();
+      renderSnippetEntries();
+      setSnippetStatus("Loaded " + snippetEntries.length + " snippet" + (snippetEntries.length === 1 ? "" : "s") + ".");
+    }
+
+    function goHome() {
+      launcherDeleteMode = false;
+      snippetDeleteMode = false;
+      updateLauncherDeleteToggleButton();
+      updateSnippetDeleteToggleButton();
+      hideCreateDialog();
+      hideSnippetCreateDialog();
+      setVisible("launcherPanel", false);
+      setVisible("snippetPanel", false);
       setVisible("homePanel", true);
       setLauncherStatus("");
+      setSnippetStatus("");
     }
 
     function toggleDeleteMode() {
-      deleteMode = !deleteMode;
-      updateDeleteToggleButton();
+      launcherDeleteMode = !launcherDeleteMode;
+      updateLauncherDeleteToggleButton();
       renderLauncherEntries();
-      setLauncherStatus(deleteMode ? "Delete mode enabled." : "Delete mode disabled.");
+      setLauncherStatus(launcherDeleteMode ? "Delete mode enabled." : "Delete mode disabled.");
     }
 
-    function updateDeleteToggleButton() {
+    function toggleSnippetDeleteMode() {
+      snippetDeleteMode = !snippetDeleteMode;
+      updateSnippetDeleteToggleButton();
+      renderSnippetEntries();
+      setSnippetStatus(snippetDeleteMode ? "Delete mode enabled." : "Delete mode disabled.");
+    }
+
+    function updateLauncherDeleteToggleButton() {
       var toggleBtn = el("toggleDeleteButton");
       if (!toggleBtn) {
         return;
       }
-      toggleBtn.innerText = deleteMode ? "Done" : "Delete";
-      toggleBtn.title = deleteMode ? "Exit delete mode" : "Enter delete mode";
+      toggleBtn.innerText = launcherDeleteMode ? "Done" : "Delete";
+      toggleBtn.title = launcherDeleteMode ? "Exit delete mode" : "Enter delete mode";
+    }
+
+    function updateSnippetDeleteToggleButton() {
+      var toggleBtn = el("toggleSnippetDeleteButton");
+      if (!toggleBtn) {
+        return;
+      }
+      toggleBtn.innerText = snippetDeleteMode ? "Done" : "Delete";
+      toggleBtn.title = snippetDeleteMode ? "Exit delete mode" : "Enter delete mode";
     }
 
     function showCreateDialog() {
@@ -274,6 +326,19 @@
       el("folderPath").value = "";
     }
 
+    function showSnippetCreateDialog() {
+      setVisible("snippetCreateDialog", true);
+      el("snippetCreateError").innerText = "";
+      el("snippetName").focus();
+    }
+
+    function hideSnippetCreateDialog() {
+      setVisible("snippetCreateDialog", false);
+      el("snippetCreateError").innerText = "";
+      el("snippetName").value = "";
+      el("snippetContent").value = "";
+    }
+
     function createLauncherButton() {
       var name = trimValue(el("appName").value);
       var folderPath = trimValue(el("folderPath").value);
@@ -284,15 +349,36 @@
       }
 
       launcherEntries.push({
-        id: nextEntryId++,
+        id: nextLauncherEntryId++,
         name: name,
         folderPath: folderPath
       });
 
       renderLauncherEntries();
-      saveLauncherEntries();
+      saveAllEntries();
       hideCreateDialog();
       setLauncherStatus("Added launcher entry: " + name);
+    }
+
+    function createSnippetButton() {
+      var name = trimValue(el("snippetName").value);
+      var content = trimValue(el("snippetContent").value);
+
+      if (!name || !content) {
+        el("snippetCreateError").innerText = "Please provide both snippet name and snippet content.";
+        return;
+      }
+
+      snippetEntries.push({
+        id: nextSnippetEntryId++,
+        name: name,
+        content: content
+      });
+
+      renderSnippetEntries();
+      saveAllEntries();
+      hideSnippetCreateDialog();
+      setSnippetStatus("Added snippet: " + name);
     }
 
     function removeLauncherEntry(entryId) {
@@ -319,8 +405,36 @@
 
       launcherEntries.splice(idx, 1);
       renderLauncherEntries();
-      saveLauncherEntries();
+      saveAllEntries();
       setLauncherStatus("Deleted launcher entry: " + removedName);
+    }
+
+    function removeSnippetEntry(entryId) {
+      var idx = -1;
+      var removedName = "";
+      var i;
+
+      for (i = 0; i < snippetEntries.length; i++) {
+        if (snippetEntries[i].id === entryId) {
+          idx = i;
+          removedName = snippetEntries[i].name;
+          break;
+        }
+      }
+
+      if (idx === -1) {
+        setSnippetStatus("Snippet not found.");
+        return;
+      }
+
+      if (!confirm("Delete snippet '" + removedName + "'?")) {
+        return;
+      }
+
+      snippetEntries.splice(idx, 1);
+      renderSnippetEntries();
+      saveAllEntries();
+      setSnippetStatus("Deleted snippet: " + removedName);
     }
 
     function renderLauncherEntries() {
@@ -352,7 +466,7 @@
 
         deleteBtn = document.createElement("button");
         deleteBtn.className = "delete-item danger";
-        deleteBtn.style.display = deleteMode ? "inline-block" : "none";
+        deleteBtn.style.display = launcherDeleteMode ? "inline-block" : "none";
         deleteBtn.innerText = "Delete";
         deleteBtn.title = "Delete this launcher entry";
         deleteBtn.onclick = (function(id) {
@@ -365,6 +479,78 @@
       }
 
       container.appendChild(fragment);
+    }
+
+    function renderSnippetEntries() {
+      var container = el("snippetButtons");
+      var fragment = document.createDocumentFragment();
+      var i;
+      var row;
+      var snippetBtn;
+      var deleteBtn;
+
+      container.innerHTML = "";
+
+      if (!snippetEntries.length) {
+        container.innerHTML = "<div>No snippets yet. Click Create to add one.</div>";
+        return;
+      }
+
+      for (i = 0; i < snippetEntries.length; i++) {
+        row = document.createElement("div");
+        row.className = "snippet-row";
+
+        snippetBtn = document.createElement("button");
+        snippetBtn.className = "snippet-item";
+        snippetBtn.innerText = snippetEntries[i].name;
+        snippetBtn.title = "Click to copy this snippet";
+        snippetBtn.onclick = (function(name, content) {
+          return function() { copySnippetContent(name, content); };
+        })(snippetEntries[i].name, snippetEntries[i].content);
+
+        deleteBtn = document.createElement("button");
+        deleteBtn.className = "delete-item danger";
+        deleteBtn.style.display = snippetDeleteMode ? "inline-block" : "none";
+        deleteBtn.innerText = "Delete";
+        deleteBtn.title = "Delete this snippet";
+        deleteBtn.onclick = (function(id) {
+          return function() { removeSnippetEntry(id); };
+        })(snippetEntries[i].id);
+
+        row.appendChild(snippetBtn);
+        row.appendChild(deleteBtn);
+        fragment.appendChild(row);
+      }
+
+      container.appendChild(fragment);
+    }
+
+    function copySnippetContent(name, content) {
+      try {
+        if (window.clipboardData && window.clipboardData.setData) {
+          window.clipboardData.setData("Text", content);
+          setSnippetStatus("Copied snippet: " + name);
+          return;
+        }
+
+        copyWithFallbackTextbox(content);
+        setSnippetStatus("Copied snippet: " + name);
+      } catch (e) {
+        setSnippetStatus("Could not copy snippet. " + e.message);
+      }
+    }
+
+    function copyWithFallbackTextbox(content) {
+      var temp = document.createElement("textarea");
+      temp.style.position = "fixed";
+      temp.style.left = "-2000px";
+      temp.style.top = "-2000px";
+      temp.value = content;
+      document.body.appendChild(temp);
+      temp.focus();
+      temp.select();
+      document.execCommand("copy");
+      document.body.removeChild(temp);
     }
 
     function launchPath(path) {
@@ -385,7 +571,7 @@
 
     function getDataFilePath() {
       var candidates = getDataFilePathCandidates();
-      return candidates.length ? candidates[0] : "launcher_entries.txt";
+      return candidates.length ? candidates[0] : "originplanet_data.opdb";
     }
 
     function getDataFilePathCandidates() {
@@ -418,7 +604,7 @@
         return;
       }
 
-      pushUnique(results, fso.BuildPath(folderPath, "launcher_entries.txt"));
+      pushUnique(results, fso.BuildPath(folderPath, "originplanet_data.opdb"));
     }
 
     function pushUnique(list, value) {
@@ -433,37 +619,36 @@
       list.push(value);
     }
 
-    function saveLauncherEntries() {
+    function saveAllEntries() {
       try {
         var fso = new ActiveXObject("Scripting.FileSystemObject");
         var dataPath = activeDataFilePath || getDataFilePath();
         var stream = fso.CreateTextFile(dataPath, true, false);
-        var i;
+        var serialized = serializeAllEntries();
+        var obfuscated = obfuscateData(serialized);
 
-        for (i = 0; i < launcherEntries.length; i++) {
-          stream.WriteLine(escapeValue(launcherEntries[i].name) + "|" + escapeValue(launcherEntries[i].folderPath));
-        }
-
+        stream.Write(obfuscated);
         stream.Close();
       } catch (e) {
         setLauncherStatus("Could not save entries. " + e.message);
+        setSnippetStatus("Could not save entries. " + e.message);
       }
     }
 
-    function loadLauncherEntries() {
+    function loadAllEntries() {
       try {
         var fso = new ActiveXObject("Scripting.FileSystemObject");
         var candidates = getDataFilePathCandidates();
         var dataPath = "";
         var stream;
-        var line;
-        var sep;
-        var name;
-        var folderPath;
+        var raw;
+        var decoded;
         var i;
 
         launcherEntries = [];
-        nextEntryId = 1;
+        nextLauncherEntryId = 1;
+        snippetEntries = [];
+        nextSnippetEntryId = 1;
 
         for (i = 0; i < candidates.length; i++) {
           if (fso.FileExists(candidates[i])) {
@@ -472,44 +657,150 @@
           }
         }
 
-        activeDataFilePath = dataPath || (candidates.length ? candidates[0] : "launcher_entries.txt");
+        activeDataFilePath = dataPath || (candidates.length ? candidates[0] : "originplanet_data.opdb");
 
         if (!dataPath) {
           renderLauncherEntries();
+          renderSnippetEntries();
           return;
         }
 
         stream = fso.OpenTextFile(dataPath, 1, false, 0);
-
-        while (!stream.AtEndOfStream) {
-          line = stream.ReadLine();
-          sep = splitEscapedPair(line);
-          if (!sep) {
-            continue;
-          }
-
-          name = unescapeValue(sep.left);
-          folderPath = unescapeValue(sep.right);
-
-          if (name && folderPath) {
-            launcherEntries.push({
-              id: nextEntryId++,
-              name: name,
-              folderPath: folderPath
-            });
-          }
-        }
-
+        raw = stream.ReadAll();
         stream.Close();
+
+        decoded = deobfuscateData(raw);
+        deserializeAllEntries(decoded);
       } catch (e) {
         setLauncherStatus("Could not load entries. " + e.message);
+        setSnippetStatus("Could not load entries. " + e.message);
       }
 
       renderLauncherEntries();
+      renderSnippetEntries();
+    }
+
+    function serializeAllEntries() {
+      var lines = [];
+      var i;
+
+      for (i = 0; i < launcherEntries.length; i++) {
+        lines.push(
+          "L|" +
+          escapeValue(launcherEntries[i].name) +
+          "|" +
+          escapeValue(launcherEntries[i].folderPath)
+        );
+      }
+
+      for (i = 0; i < snippetEntries.length; i++) {
+        lines.push(
+          "S|" +
+          escapeValue(snippetEntries[i].name) +
+          "|" +
+          escapeValue(snippetEntries[i].content)
+        );
+      }
+
+      return lines.join("\n");
+    }
+
+    function deserializeAllEntries(serialized) {
+      var normalized = String(serialized || "").replace(/\r/g, "");
+      var lines = normalized.split("\n");
+      var parts;
+      var i;
+
+      launcherEntries = [];
+      nextLauncherEntryId = 1;
+      snippetEntries = [];
+      nextSnippetEntryId = 1;
+
+      for (i = 0; i < lines.length; i++) {
+        if (!lines[i]) {
+          continue;
+        }
+
+        parts = splitEscapedValues(lines[i], 3);
+        if (!parts) {
+          continue;
+        }
+
+        if (parts[0] === "L") {
+          launcherEntries.push({
+            id: nextLauncherEntryId++,
+            name: unescapeValue(parts[1]),
+            folderPath: unescapeValue(parts[2])
+          });
+        } else if (parts[0] === "S") {
+          snippetEntries.push({
+            id: nextSnippetEntryId++,
+            name: unescapeValue(parts[1]),
+            content: unescapeValue(parts[2])
+          });
+        }
+      }
+    }
+
+    function obfuscateData(plainText) {
+      var key = "OriginPlanetLocalKey";
+      var i;
+      var mixed;
+      var hex = "";
+      var code;
+
+      plainText = String(plainText || "");
+
+      for (i = 0; i < plainText.length; i++) {
+        mixed = plainText.charCodeAt(i) ^ key.charCodeAt(i % key.length) ^ ((i * 31) % 251);
+        code = mixed.toString(16).toUpperCase();
+        if (code.length < 2) {
+          code = "0" + code;
+        }
+        hex += code;
+      }
+
+      return "OPDB1:" + hex;
+    }
+
+    function deobfuscateData(rawValue) {
+      var key = "OriginPlanetLocalKey";
+      var prefix = "OPDB1:";
+      var payload = String(rawValue || "");
+      var i;
+      var chunk;
+      var mixed;
+      var out = "";
+
+      if (payload.indexOf(prefix) !== 0) {
+        return payload;
+      }
+
+      payload = payload.substring(prefix.length);
+
+      if (payload.length % 2 !== 0) {
+        return "";
+      }
+
+      for (i = 0; i < payload.length; i += 2) {
+        chunk = parseInt(payload.substr(i, 2), 16);
+        if (isNaN(chunk)) {
+          continue;
+        }
+
+        mixed = chunk ^ key.charCodeAt((i / 2) % key.length) ^ ((((i / 2) * 31) % 251));
+        out += String.fromCharCode(mixed);
+      }
+
+      return out;
     }
 
     function setLauncherStatus(message) {
       el("launcherStatus").innerText = message;
+    }
+
+    function setSnippetStatus(message) {
+      el("snippetStatus").innerText = message;
     }
 
     function trimValue(value) {
@@ -531,30 +822,41 @@
         .replace(/\\\\/g, "\\");
     }
 
-    function splitEscapedPair(value) {
-      var i;
+    function splitEscapedValues(value, expectedParts) {
+      var parts = [];
+      var current = "";
       var escaped = false;
+      var i;
 
       for (i = 0; i < value.length; i++) {
         if (escaped) {
+          current += value.charAt(i);
           escaped = false;
           continue;
         }
 
         if (value.charAt(i) === "\\") {
+          current += value.charAt(i);
           escaped = true;
           continue;
         }
 
         if (value.charAt(i) === "|") {
-          return {
-            left: value.substring(0, i),
-            right: value.substring(i + 1)
-          };
+          parts.push(current);
+          current = "";
+          continue;
         }
+
+        current += value.charAt(i);
       }
 
-      return null;
+      parts.push(current);
+
+      if (parts.length !== expectedParts) {
+        return null;
+      }
+
+      return parts;
     }
 
     function getPathFromPathname() {
@@ -603,8 +905,9 @@
     }
 
     window.onload = function() {
-      updateDeleteToggleButton();
-      loadLauncherEntries();
+      updateLauncherDeleteToggleButton();
+      updateSnippetDeleteToggleButton();
+      loadAllEntries();
 
       el("appName").onkeypress = function(evt) {
         evt = evt || window.event;
@@ -619,6 +922,13 @@
           createLauncherButton();
         }
       };
+
+      el("snippetName").onkeypress = function(evt) {
+        evt = evt || window.event;
+        if (evt.keyCode === 13) {
+          createSnippetButton();
+        }
+      };
     };
   </script>
 </head>
@@ -631,7 +941,10 @@
       <button class="primary" onclick="sayHello()">Press me</button>
       <span id="msg"></span>
     </div>
-    <button class="primary" onclick="openLauncher()">Open App Launcher</button>
+    <div class="row">
+      <button class="primary" onclick="openLauncher()">Open App Launcher</button>
+      <button class="primary" onclick="openSnippetPanel()">Open Clipboard Snippets</button>
+    </div>
   </div>
 
   <div id="launcherPanel" class="panel">
@@ -665,6 +978,39 @@
 
     <div id="launcherButtons"></div>
     <div id="launcherStatus"></div>
+  </div>
+
+  <div id="snippetPanel" class="panel">
+    <div class="row">
+      <span class="panel-title">Clipboard Snippets</span>
+      <div class="snippet-header-actions">
+        <button class="primary" onclick="showSnippetCreateDialog()">Create</button>
+        <button id="toggleSnippetDeleteButton" class="ghost" onclick="toggleSnippetDeleteMode()">Delete</button>
+        <button class="ghost" onclick="goHome()">Home</button>
+      </div>
+    </div>
+
+    <div id="snippetCreateDialog">
+      <div class="form-row">
+        <label for="snippetName">Snippet Name</label>
+        <input id="snippetName" type="text" placeholder="Example: Team Standup Update" />
+      </div>
+
+      <div class="form-row">
+        <label for="snippetContent">Snippet Content</label>
+        <textarea id="snippetContent" placeholder="Write the text you want copied when clicking this snippet button."></textarea>
+      </div>
+
+      <div id="snippetCreateError"></div>
+
+      <div class="row">
+        <button class="primary" onclick="createSnippetButton()">Confirm</button>
+        <button class="ghost" onclick="hideSnippetCreateDialog()">Cancel</button>
+      </div>
+    </div>
+
+    <div id="snippetButtons"></div>
+    <div id="snippetStatus"></div>
   </div>
 </body>
 </html>
