@@ -1052,3 +1052,44 @@ This keeps:
 - Keep `setVisible(...)` generic (block/none) and avoid mixing layout semantics into utility helpers.
 - For future panel-level layout requirements, always handle in panel-specific controller functions.
 - If dialog containers ever need flex, apply via dedicated class/CSS rather than global visibility helper behavior.
+
+## 2026-02-18 — Follow-up fix: preserve manual resizing affordance
+
+### 1) User feedback addressed
+
+User reported manual window resizing felt disabled after the startup-sizing/full-height changes.
+
+### 2) Root cause hypothesis and adjustment strategy
+
+Likely issue on some setups:
+- startup sizing could clamp to full available screen dimensions,
+- which can make edge/corner grab affordances awkward (especially near screen/taskbar edges),
+- creating a practical "can't resize" experience even if `RESIZE="yes"` is still set.
+
+### 3) Implementation change
+
+Adjusted `setInitialWindowSize()` to keep startup window comfortably below screen bounds and centered:
+
+- Added safety margins when clamping startup size:
+  - right margin: `80`
+  - bottom margin: `80`
+- Added floor values to avoid tiny window startup:
+  - min width: `760`
+  - min height: `520`
+- After `window.resizeTo(...)`, now centers the window via `window.moveTo(...)` when available.
+
+Behavior intent now:
+- one-time startup sizing remains,
+- no post-load auto-resize remains,
+- manual resizing should remain easy because the initial window is not pinned against screen edges.
+
+### 4) Validation performed
+
+- Source inspection of updated `setInitialWindowSize()` bounds/margins/centering logic.
+- Verified no continuous resize hooks were reintroduced.
+- Ran `git diff --check` for patch hygiene.
+
+### 5) Maintenance notes for future me
+
+- If users on very small displays still report trouble, reduce default size and/or increase startup margins.
+- If multi-monitor behavior needs refinement, compute center from active monitor instead of global `screen` metrics.

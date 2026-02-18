@@ -280,20 +280,38 @@
       var targetHeight = 760;
       var maxWidth = screen && screen.availWidth ? screen.availWidth : 1600;
       var maxHeight = screen && screen.availHeight ? screen.availHeight : 1200;
+      var rightMargin = 80;
+      var bottomMargin = 80;
+      var centeredX = 0;
+      var centeredY = 0;
 
       if (!window.resizeTo) {
         return;
       }
 
-      if (targetWidth > maxWidth) {
-        targetWidth = maxWidth;
+      if (targetWidth > maxWidth - rightMargin) {
+        targetWidth = maxWidth - rightMargin;
       }
 
-      if (targetHeight > maxHeight) {
-        targetHeight = maxHeight;
+      if (targetHeight > maxHeight - bottomMargin) {
+        targetHeight = maxHeight - bottomMargin;
+      }
+
+      if (targetWidth < 760) {
+        targetWidth = 760;
+      }
+
+      if (targetHeight < 520) {
+        targetHeight = 520;
       }
 
       window.resizeTo(targetWidth, targetHeight);
+
+      if (window.moveTo) {
+        centeredX = Math.max(0, Math.floor((maxWidth - targetWidth) / 2));
+        centeredY = Math.max(0, Math.floor((maxHeight - targetHeight) / 2));
+        window.moveTo(centeredX, centeredY);
+      }
     }
 
     function setAllStatuses(message) {
