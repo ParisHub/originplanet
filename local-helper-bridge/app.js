@@ -1,37 +1,67 @@
 const openCBtn = document.getElementById('openCBtn');
 const statusEl = document.getElementById('status');
 
-function setStatus(text) {
+const BRIDGE_COMMAND_KEY = 'localHelperBridge.command';
+const BRIDGE_ACK_KEY = 'localHelperBridge.ack';
+const ACK_TIMEOUT_MS = 4500;
+
+function setStatus(text, tone = 'info') {
   statusEl.textContent = text;
+  statusEl.dataset.tone = tone;
 }
 
-function getHtaAbsolutePath() {
-  const baseUrl = window.location.href.slice(0, window.location.href.lastIndexOf('/'));
-  const htaUrl = `${baseUrl}/local-worker.hta`;
-
-  if (!htaUrl.startsWith('file:///')) {
+function parseJsonSafe(raw) {
+  if (!raw) {
     return null;
   }
 
-  return decodeURIComponent(htaUrl.replace('file:///', '').replace(/\//g, '\\'));
+  try {
+    return JSON.parse(raw);
+  } catch (_error) {
+    return null;
+  }
 }
 
-function launchHtaToOpenC() {
-  const htaPath = getHtaAbsolutePath();
+function sendOpenCCommand() {
+  const command = {
+    id: `cmd-${Date.now()}`,
+    action: 'open-c',
+    createdAt: new Date().toISOString(),
+    source: 'local-helper-bridge-ui'
+  };
 
-  if (!htaPath) {
-    setStatus('Open this HTML via file:/// on Windows so HTA can be launched.');
+  localStorage.setItem(BRIDGE_COMMAND_KEY, JSON.stringify(command));
+  setStatus('Command sent. Waiting for HTA acknowledgment...', 'pending');
+
+  window.setTimeout(() => {
+    const ack = parseJsonSafe(localStorage.getItem(BRIDGE_ACK_KEY));
+
+    if (ack && ack.commandId === command.id && ack.status === 'ok') {
+      return;
+    }
+
+    setStatus('No HTA acknowledgment yet. Ensure local-worker.hta is open.', 'warning');
+  }, ACK_TIMEOUT_MS);
+}
+
+window.addEventListener('storage', (event) => {
+  if (event.key !== BRIDGE_ACK_KEY || !event.newValue) {
     return;
   }
 
-  try {
-    const shell = new ActiveXObject('WScript.Shell');
-    shell.Run(`mshta.exe "${htaPath}"`, 1, false);
-    setStatus('Launching HTA helper...');
-  } catch (error) {
-    setStatus(`Failed to launch HTA: ${error.message}`);
-  }
-}
+  const ack = parseJsonSafe(event.newValue);
 
-openCBtn.addEventListener('click', launchHtaToOpenC);
-setStatus('Ready.');
+  if (!ack) {
+    return;
+  }
+
+  if (ack.status === 'ok') {
+    setStatus(`HTA acknowledged command (${ack.commandId}). Explorer should be open.`, 'success');
+    return;
+  }
+
+  setStatus(`HTA reported an error: ${ack.message || 'unknown error'}`, 'error');
+});
+
+openCBtn.addEventListener('click', sendOpenCCommand);
+setStatus('Ready. Open local-worker.hta, then click the button.', 'info');

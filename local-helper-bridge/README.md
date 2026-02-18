@@ -1,46 +1,51 @@
-# Local Helper Bridge (Minimal)
+# Local Helper Bridge (Manual Dual-Open)
 
 ## What exists now
 
-- `index.html`: single centered button UI.
-- `styles.css`: minimal polished styling for centered one-button layout.
-- `app.js`: button click handler that launches `.hta` locally.
-- `local-worker.hta`: immediately opens `C:\` in Explorer on startup.
-- `api-contract.txt`: concise runtime contract for this exact behavior.
+- `index.html`: one centered button UI that sends one command (`open-c`).
+- `styles.css`: minimal polished styling for centered one-button layout plus status tones.
+- `app.js`: writes command to localStorage and listens for HTA acknowledgement.
+- `local-worker.hta`: passive blue helper window polling for commands; opens `C:\` in Explorer when instructed.
+- `api-contract.txt`: current command/ack contract and runtime requirements.
 
 ## Architecture (present state)
 
-1. Click button in HTML.
-2. HTML launches `mshta.exe` with `local-worker.hta` path.
-3. HTA starts and runs `explorer.exe C:\`.
-4. Explorer opens `C:\`.
+1. User manually opens `local-worker.hta`.
+2. User manually opens `index.html`.
+3. HTML button click writes command JSON to localStorage.
+4. HTA polling loop reads command and executes `explorer.exe C:\`.
+5. HTA writes acknowledgement JSON to localStorage.
+6. HTML displays ack status.
 
 ## Frontend notes
 
 ### `index.html`
 - One centered action button: **Open C:\ in Explorer**.
-- Small status text at bottom for immediate feedback.
+- Static hint reminds operator that HTA must be opened first.
+- Live status text confirms sent/ack/warning/error outcomes.
 
 ### `styles.css`
 - Fullscreen dark-blue gradient background.
-- Centered call-to-action button with clear focus/hover behavior.
-- Minimal status text styling.
+- Centered CTA with focus/hover states.
+- Status tone colors for success/warning/error.
 
 ### `app.js`
-- Resolves local `.hta` path from current `file:///` location.
-- Uses `ActiveXObject('WScript.Shell')` to run `mshta.exe`.
-- Sets simple status messages for ready, launch, and failure states.
+- Writes command object to `localHelperBridge.command`.
+- Listens for `storage` updates on `localHelperBridge.ack`.
+- Shows warning if no ack is observed within timeout window.
+- Contains no auto-launch behavior and no simulated backend.
 
 ## HTA notes
 
 ### `local-worker.hta`
-- Passive blue window.
-- No user controls.
-- On load, calls `explorer.exe C:\`.
-- Displays status text in-window.
+- Passive blue status window, no user controls.
+- Polls localStorage every 500ms for command key updates.
+- Executes only known action `open-c` by running `explorer.exe C:\`.
+- Publishes ack payload to `localHelperBridge.ack`.
 
 ## How to run
 
-1. On Windows, open `local-helper-bridge/index.html` directly from disk.
-2. Click **Open C:\ in Explorer**.
-3. HTA helper launches and opens File Explorer at `C:\`.
+1. On Windows, open `local-helper-bridge/local-worker.hta` first.
+2. Then open `local-helper-bridge/index.html`.
+3. Click **Open C:\ in Explorer**.
+4. Explorer should open `C:\`, and HTML should show an acknowledgement status.
