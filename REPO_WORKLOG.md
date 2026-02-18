@@ -702,3 +702,47 @@ So per-user local `.opdb` behavior remains as designed.
 
 - Ran patch sanity and source checks after refactor.
 - Captured updated UI screenshot for the Data Import / Export module to confirm navigational wiring still works.
+
+## 2026-02-18 — Trace cleanup pass for removed/legacy references
+
+### 1) Request interpreted
+
+User asked for a repository cleanup pass to remove traces of old components that are no longer active, with explicit documentation of actions for future maintenance.
+
+### 2) Audit performed
+
+I ran a targeted text-reference search against current project files to identify lingering stale references to removed files/tools and older names.
+
+Scope searched:
+
+- `README.md`
+- `REPO_WORKLOG.md`
+- `docs/`
+- `originplanet.hta`
+
+Reference patterns checked included:
+
+- removed typing utility names
+- old HTA filename
+- previously deleted binary/html artifacts
+- moved legacy source filenames
+
+### 3) Cleanup decision
+
+Historical references in `REPO_WORKLOG.md` were intentionally retained because they are part of the chronological audit trail.
+
+Action taken focused on user-facing repository overview text in `README.md`, removing "status notes" phrasing that centered deleted components, and replacing it with an explicit **current layout** section that reflects only the active/relevant structure.
+
+### 4) File edits
+
+- `README.md`
+  - Replaced old cleanup-status bullets with a stable "Current repository layout" section.
+  - The new section points maintainers directly to active app path (`originplanet.hta`), docs/data, archived experiments, and worklog.
+
+- `REPO_WORKLOG.md`
+  - Added this entry to document request interpretation, audit method, rationale, and exact scope of cleanup.
+
+### 5) Validation notes
+
+- Verified expected modifications via line-numbered file inspection and `git diff`.
+- Confirmed no unintended file changes outside documentation cleanup scope.
