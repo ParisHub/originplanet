@@ -3,7 +3,6 @@ const taskPayloadEl = document.getElementById('taskPayload');
 const taskPriorityEl = document.getElementById('taskPriority');
 const previewBtn = document.getElementById('previewBtn');
 const sendBtn = document.getElementById('sendBtn');
-const helloBtn = document.getElementById('helloBtn');
 const clearBtn = document.getElementById('clearBtn');
 const requestPreviewEl = document.getElementById('requestPreview');
 const activityLogEl = document.getElementById('activityLog');
@@ -121,7 +120,7 @@ async function sendRequest() {
 
   if (launchResult.launched) {
     requestPreviewEl.textContent = `${requestPreviewEl.textContent}\n\n// HTA launch command\n${launchResult.command}`;
-    logActivity('HTA launched automatically with request payload.', 'success');
+    logActivity('HTA helper launched automatically and received request.', 'success');
   } else {
     logActivity(`Automatic HTA launch unavailable (${launchResult.error}). Using simulation.`, 'warning');
     const response = await mockHtaBackend(currentRequest);
@@ -133,30 +132,6 @@ async function sendRequest() {
   sendBtn.textContent = 'Send to HTA worker';
 }
 
-async function sendHelloWindowRequest() {
-  const helloRequest = buildRequest({
-    type: 'show-toast',
-    payload: 'hello',
-    priority: 3
-  });
-
-  currentRequest = helloRequest;
-  requestPreviewEl.textContent = JSON.stringify(helloRequest, null, 2);
-
-  const launchResult = launchHtaWithRequest(helloRequest);
-
-  if (launchResult.launched) {
-    requestPreviewEl.textContent = `${requestPreviewEl.textContent}\n\n// HTA launch command\n${launchResult.command}`;
-    logActivity('Hello request launched in HTA. A small hello window should appear.', 'success');
-    return;
-  }
-
-  logActivity(`Hello action could not auto-launch HTA (${launchResult.error}).`, 'warning');
-  const response = await mockHtaBackend(helloRequest);
-  requestPreviewEl.textContent = `${requestPreviewEl.textContent}\n\n// Simulated HTA response\n${JSON.stringify(response, null, 2)}`;
-  logActivity('Hello request simulated because HTA launch is not available here.', 'warning');
-}
-
 function clearState() {
   currentRequest = null;
   taskPayloadEl.value = '';
@@ -166,7 +141,6 @@ function clearState() {
 
 previewBtn.addEventListener('click', previewRequest);
 sendBtn.addEventListener('click', sendRequest);
-helloBtn.addEventListener('click', sendHelloWindowRequest);
 clearBtn.addEventListener('click', clearState);
 
 previewRequest();

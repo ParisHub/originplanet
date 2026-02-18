@@ -4,35 +4,34 @@ This folder is intentionally standalone and separate from other project parts.
 
 ## What this contains right now
 
-- `index.html`: frontend shell with a two-step request flow plus a direct "hello popup" action.
+- `index.html`: frontend shell with a request builder and a send flow.
 - `styles.css`: UX/UI styling for a modern card-based interface with dark gradient theme.
-- `app.js`: frontend behavior that builds request JSON, validates, attempts auto-launch of HTA, and logs activity.
-- `local-worker.hta`: Windows HTA backend placeholder that can execute startup requests instantly.
-- `api-contract.txt`: current source-of-truth contract for request/response and launch transport.
+- `app.js`: frontend behavior that builds request JSON, validates input, attempts HTA launch, and logs activity.
+- `local-worker.hta`: passive Windows helper window that indicates helper status and receives startup request payloads.
+- `api-contract.txt`: source-of-truth contract for request envelope, launch transport, and HTA runtime behavior.
 
 ## Present architecture (current state only)
 
 1. User creates a request in the frontend.
 2. Frontend serializes request as JSON envelope.
 3. Frontend attempts to launch HTA with URL-encoded request query string.
-4. HTA auto-parses startup request and executes immediately.
-5. For now, `show-toast` with payload `hello` opens a small popup that says hello.
+4. HTA starts as a small blue status window and parses request on startup.
+5. HTA updates status text with latest task information.
 6. If browser blocks ActiveX launch path, frontend logs warning and uses simulated fallback response.
 
 ## Frontend details
 
 ### `index.html`
-- Hero section explains auto-launch behavior and fallback behavior.
+- Hero section explains the HTA helper is passive.
 - Task form includes:
   - task type select
   - payload text field
   - priority slider
 - Dispatch actions include:
   - Send to HTA worker
-  - Open Hello window via HTA
   - Clear
 - Request preview area shows request payload and launch/simulation output.
-- Activity log records all actions, errors, and fallback warnings.
+- Activity log records actions, validation errors, and fallback warnings.
 
 ### `styles.css`
 - Dark-themed gradient background with glass-like cards.
@@ -41,29 +40,27 @@ This folder is intentionally standalone and separate from other project parts.
 - Semantic button variants:
   - primary (preview)
   - success (send)
-  - accent (hello popup)
   - ghost (clear)
 - Activity log color-codes success/error/warning states.
 
 ### `app.js`
-- `buildRequest(overrides)`: normalizes UI values into API envelope, supports forced overrides.
+- `buildRequest(overrides)`: normalizes UI values into API envelope.
 - `getHtaAbsolutePath()`: resolves local `.hta` path when frontend is loaded from file URL.
 - `launchHtaWithRequest(request)`: uses `ActiveXObject('WScript.Shell')` to run `mshta.exe` with encoded request.
 - `sendRequest()`: validates request, attempts HTA launch, otherwise falls back to simulated response.
-- `sendHelloWindowRequest()`: sends a prepared `show-toast` + `hello` request.
 - `logActivity()`: timestamped event stream for operator clarity.
 
 ## HTA backend details
 
 ### `local-worker.hta`
-- Starts with `processStartupRequest()` on body load.
-- Reads `?request=...` from query string and executes immediately if present.
-- `executeRequest(rawJson)` currently:
-  - parses incoming JSON
-  - logs task type and payload
-  - if task is `show-toast` with payload `hello`, opens a small popup saying hello
-  - returns queue acknowledgment JSON
-- Includes comments for future Windows automation expansion points.
+- Purposefully minimal and non-interactive.
+- Opens as a small blue window and displays `.hta helper is running`.
+- On startup, reads `?request=...` query parameter if present.
+- Parses request with compatibility path:
+  - `window.JSON.parse` when available
+  - legacy parser fallback when JSON global is not present
+- Updates status text with `last task: <type>` when valid request is received.
+- No buttons and no manual controls; this helper is intended to be managed from HTML frontend only.
 
 ## API contract
 
@@ -74,12 +71,12 @@ If frontend and HTA implementation diverge, update both code and contract togeth
 
 ### Frontend (integration attempt)
 - Best for Windows local usage: open `index.html` from filesystem and run in an environment where `ActiveXObject` is allowed.
-- Click **Send to HTA worker** or **Open Hello window via HTA**.
-- If launch is blocked, the UI will clearly log warning + simulation fallback.
+- Click **Send to HTA worker**.
+- If launch is blocked, UI logs warning and shows simulation fallback.
 
 ### HTA
-- On Windows, run `local-worker.hta` directly for manual testing.
-- Use **Run demo request** to test hello popup + response path without frontend.
+- `local-worker.hta` can be opened directly on Windows.
+- It should display a blue status window and remain passive.
 
 ## Suggested next implementation steps
 

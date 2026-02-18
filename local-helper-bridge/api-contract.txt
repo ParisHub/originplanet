@@ -9,11 +9,11 @@ Defines the current lightweight contract between:
 
 Current execution mode
 ----------------------
-Primary mode now is direct HTA launch with an encoded request in query string:
+Primary mode is direct HTA launch with an encoded request in query string:
 
 mshta.exe "<absolute_path_to_local-worker.hta>?request=<urlencoded-json>"
 
-If launch is unavailable (for example, a standard browser blocks ActiveXObject),
+If launch is unavailable (for example, browser blocks ActiveXObject),
 frontend falls back to a local simulated response only for development visibility.
 
 Current Envelope
@@ -39,23 +39,26 @@ Validation Rules (frontend)
 Startup behavior (HTA)
 ----------------------
 - On load, HTA reads query parameter `request`.
-- If present, HTA executes request immediately.
-- If absent, HTA waits for manual demo button interaction.
+- If present, HTA parses request and updates in-window status text.
+- If absent, HTA remains in running state text only.
+- HTA is intentionally passive (no buttons, no manual interaction expected).
 
-Expected HTA Response
----------------------
-{
-  "accepted": true,
-  "status": "queued | running | complete | failed",
-  "requestId": "hex-string",
-  "error": "optional error text"
-}
+Runtime status behavior (HTA)
+-----------------------------
+- Base status text: `.hta helper is running`
+- With request: shows `.hta helper is running` plus `last task: <taskType>`
+- If parse warning occurs: shows warning text in status region
 
-Task Semantics (current and planned)
-------------------------------------
-- show-toast + payload "hello": immediately opens a small hello popup window in HTA.
+Compatibility note
+------------------
+- HTA parser supports both `window.JSON.parse` (when available) and legacy JScript fallback parser.
+- This avoids `JSON is undefined` failures in older HTA engines.
+
+Task Semantics (planned)
+------------------------
 - open-path: planned (open file/folder in Explorer)
 - run-command: planned (execute trusted command with controlled allowlist)
+- show-toast: planned (local non-blocking message behavior)
 
 Security Notes
 --------------

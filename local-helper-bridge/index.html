@@ -12,8 +12,8 @@
         <p class="eyebrow">Local Automation Bridge</p>
         <h1>Future-ready UI for Windows local tasks</h1>
         <p class="subtitle">
-          This lightweight frontend now attempts to launch the HTA automatically on send. If the
-          browser does not permit local automation APIs, you still get a simulated fallback.
+          This lightweight frontend launches the HTA helper automatically when you send a request.
+          The HTA is intentionally passive and only indicates that the local helper is running.
         </p>
       </header>
 
@@ -44,13 +44,12 @@
         <div class="card">
           <h2>2) Dispatch</h2>
           <p>
-            Send now attempts to execute through the HTA worker immediately. If automatic HTA launch
-            is blocked in your browser, a simulated response is displayed.
+            Send attempts immediate HTA startup + request handoff. If the browser blocks local
+            automation APIs, a simulated fallback response is shown.
           </p>
           <pre id="requestPreview" class="preview" aria-live="polite"></pre>
           <div class="actions">
             <button id="sendBtn" class="btn success">Send to HTA worker</button>
-            <button id="helloBtn" class="btn accent">Open Hello window via HTA</button>
             <button id="clearBtn" class="btn ghost">Clear</button>
           </div>
         </div>

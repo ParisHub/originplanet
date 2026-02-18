@@ -1,6 +1,6 @@
 <html>
   <head>
-    <title>Local Worker (Prototype)</title>
+    <title>Local Worker Helper</title>
     <HTA:APPLICATION
       ID="LocalWorker"
       APPLICATIONNAME="LocalWorker"
@@ -9,49 +9,19 @@
       SINGLEINSTANCE="yes"
       SYSMENU="yes"
       WINDOWSTATE="normal"
+      SHOWINTASKBAR="yes"
     />
     <script language="javascript">
-      function appendLog(text) {
-        var log = document.getElementById('log');
-        var line = document.createElement('div');
-        line.innerText = '[' + new Date().toLocaleTimeString() + '] ' + text;
-        log.appendChild(line);
-      }
-
-      function showHelloPopup() {
-        try {
-          var shell = new ActiveXObject('WScript.Shell');
-          shell.Popup('hello', 3, 'Local Worker', 64);
-        } catch (error) {
-          alert('hello');
+      function parseJsonCompat(rawText) {
+        if (!rawText) {
+          return null;
         }
-      }
 
-      function executeRequest(rawJson) {
-        try {
-          var request = JSON.parse(rawJson);
-          appendLog('Received task type: ' + request.task.type);
-          appendLog('Payload: ' + request.task.payload);
-
-          if (request.task.type === 'show-toast' && request.task.payload.toLowerCase() === 'hello') {
-            showHelloPopup();
-            appendLog('Displayed hello popup window.');
-          }
-
-          // Future local automation hooks:
-          // - WScript.Shell.Run(command)
-          // - FileSystemObject operations
-          // - Trusted local app orchestration
-
-          return JSON.stringify({
-            accepted: true,
-            status: 'queued',
-            requestId: Math.random().toString(16).slice(2)
-          });
-        } catch (error) {
-          appendLog('Failed to parse request: ' + error.message);
-          return JSON.stringify({ accepted: false, error: error.message });
+        if (window.JSON && typeof window.JSON.parse === 'function') {
+          return window.JSON.parse(rawText);
         }
+
+        return new Function('return (' + rawText + ');')();
       }
 
       function getQueryValue(name) {
@@ -73,65 +43,71 @@
         return null;
       }
 
+      function updateStatus(text) {
+        document.getElementById('status').innerText = text;
+      }
+
+      function executeRequest(rawRequestText) {
+        try {
+          var request = parseJsonCompat(rawRequestText);
+
+          if (!request || !request.task) {
+            updateStatus('.hta helper is running');
+            return;
+          }
+
+          var taskType = request.task.type || 'unknown-task';
+          updateStatus('.hta helper is running\nlast task: ' + taskType);
+        } catch (error) {
+          updateStatus('.hta helper is running\nrequest parse warning: ' + error.message);
+        }
+      }
+
       function processStartupRequest() {
+        updateStatus('.hta helper is running');
+
         var encodedRequest = getQueryValue('request');
 
         if (!encodedRequest) {
-          appendLog('No startup request provided. Waiting for manual demo action.');
           return;
         }
 
-        appendLog('Startup request found in query string. Executing immediately.');
-        var result = executeRequest(encodedRequest);
-        appendLog('Startup response: ' + result);
-      }
-
-      function runDemo() {
-        var sample = '{"version":"1.0","task":{"type":"show-toast","payload":"hello","priority":3}}';
-        var result = executeRequest(sample);
-        appendLog('Response: ' + result);
+        executeRequest(encodedRequest);
       }
     </script>
     <style>
+      html,
       body {
-        font-family: Segoe UI, Arial, sans-serif;
         margin: 0;
-        background: #0f152d;
-        color: #ecf1ff;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        font-family: Segoe UI, Arial, sans-serif;
       }
 
       .frame {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
         padding: 16px;
-      }
-
-      #log {
-        margin-top: 12px;
-        border: 1px solid #4b5fa3;
-        background: #0a1024;
-        padding: 10px;
-        min-height: 150px;
-        font-family: Consolas, monospace;
-      }
-
-      button {
-        background: #7f8cff;
         color: #ffffff;
-        border: none;
-        border-radius: 8px;
-        padding: 8px 12px;
-        cursor: pointer;
+        background: linear-gradient(160deg, #2d66d9 0%, #1a48a9 100%);
+      }
+
+      .status {
+        font-size: 20px;
+        font-weight: 600;
+        line-height: 1.4;
+        white-space: pre-line;
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
       }
     </style>
   </head>
   <body onload="processStartupRequest()">
     <div class="frame">
-      <h3>Local Worker (HTA)</h3>
-      <p>
-        This is the local backend placeholder for future Windows automation tasks. It now supports
-        immediate execution when launched with <code>?request=...</code>.
-      </p>
-      <button onclick="runDemo()">Run demo request</button>
-      <div id="log"></div>
+      <div id="status" class="status">.hta helper is running</div>
     </div>
   </body>
 </html>
