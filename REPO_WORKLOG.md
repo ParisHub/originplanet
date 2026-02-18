@@ -368,3 +368,62 @@ Performed a full UI refresh focused on a modern soft-card look:
 - Parsed embedded JavaScript with Node to ensure no syntax regressions.
 - Ran `git diff --check` for patch formatting.
 - Attempted screenshot capture through browser tool (environment still blocks local file path access).
+
+## 2026-02-17 — Optimization pass + everything-app feature backlog
+
+### 1) Request interpreted
+
+User requested two outcomes:
+
+1. Produce a list of plausible "everything app" productivity features.
+2. Optimize `originplanet.hta` implementation.
+
+Also honored user preference to document changes clearly for future maintenance.
+
+### 2) Feature ideation output
+
+Created a dedicated planning document:
+
+- `docs/everything_app_feature_ideas.md`
+
+What it contains:
+
+- 10 feature domains (capture, planning, tasks, focus, launcher expansion, reference, personal ops, automation, review, UX foundations).
+- Practical module ideas designed for HTA/JScript constraints.
+- Suggested implementation order to maximize early usefulness.
+
+### 3) HTA optimization changes
+
+File updated:
+
+- `originplanet.hta`
+
+Optimization themes implemented:
+
+- **DOM access cleanup**
+  - Added helper `el(id)` to remove repetitive `document.getElementById(...)` calls.
+  - Added `setVisible(id, isVisible)` helper to centralize visibility toggling.
+- **Render efficiency**
+  - `renderLauncherEntries()` now batches row insertion with `DocumentFragment` before appending.
+- **Path resolution reuse**
+  - Added `pathCandidatesCache` so repeated candidate path generation avoids redundant rebuild work.
+- **Launch robustness**
+  - `launchPath(...)` now checks path existence (`FolderExists`/`FileExists`) before `explorer` run.
+  - Provides status feedback when path is missing.
+- **Keyboard UX speed-up**
+  - Added Enter-key submit behavior for `appName` and `folderPath` inputs to create entries faster.
+
+### 4) Verification actions
+
+Validation performed locally:
+
+- `git diff --check` for patch cleanliness.
+- Reviewed final file diff for behavior consistency and non-regression of existing launcher create/delete/persist flows.
+
+### 5) Notes for future self
+
+If future optimization is needed, likely highest ROI next steps are:
+
+1. Add explicit path-candidate cache invalidation if runtime location can change dynamically.
+2. Introduce a small in-memory index for launcher entries if list size becomes large.
+3. Move inline JS into a separate `.js` file if HTA packaging constraints allow (improves maintainability/testing).
