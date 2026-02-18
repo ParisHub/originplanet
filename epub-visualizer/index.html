@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EPUB Chapter Visualizer</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <header>
+      <h1>EPUB Chapter Visualizer</h1>
+      <p>
+        Load an <code>.epub</code> and browse all chapters and spine documents separately.
+      </p>
+    </header>
+
+    <main>
+      <section class="panel controls">
+        <label for="epubInput">Select EPUB</label>
+        <input id="epubInput" type="file" accept=".epub,application/epub+zip" />
+        <div id="status" role="status" aria-live="polite">No file loaded yet.</div>
+      </section>
+
+      <section class="panel toc-panel">
+        <h2>Chapters / TOC</h2>
+        <ul id="tocList" class="toc-list"></ul>
+      </section>
+
+      <section class="panel spine-panel">
+        <h2>Spine Documents</h2>
+        <ul id="spineList" class="spine-list"></ul>
+      </section>
+
+      <section class="panel chapter-viewer">
+        <h2 id="chapterTitle">Chapter Preview</h2>
+        <iframe id="chapterFrame" title="Chapter content preview"></iframe>
+      </section>
+    </main>
+  </body>
+</html>
