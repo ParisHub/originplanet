@@ -4,72 +4,86 @@ This folder is intentionally standalone and separate from other project parts.
 
 ## What this contains right now
 
-- `index.html`: the lightweight frontend shell with a polished two-step flow (build request, dispatch request).
+- `index.html`: frontend shell with a two-step request flow plus a direct "hello popup" action.
 - `styles.css`: UX/UI styling for a modern card-based interface with dark gradient theme.
-- `app.js`: frontend behavior that builds request JSON, validates it, simulates HTA dispatch, and logs activity.
-- `local-worker.hta`: a Windows HTA backend placeholder that parses requests and logs responses.
-- `api-contract.txt`: current source-of-truth contract describing request and response structures.
+- `app.js`: frontend behavior that builds request JSON, validates, attempts auto-launch of HTA, and logs activity.
+- `local-worker.hta`: Windows HTA backend placeholder that can execute startup requests instantly.
+- `api-contract.txt`: current source-of-truth contract for request/response and launch transport.
 
-## Present architecture (no history, current state only)
+## Present architecture (current state only)
 
-1. User selects a task type and enters payload in the frontend.
-2. Frontend creates a request envelope (`version`, `source`, `timestamp`, `task`).
-3. Frontend validates payload before dispatch.
-4. Dispatch currently uses a simulated backend response in-browser.
-5. HTA file includes compatible parsing and response structure for future direct wiring.
+1. User creates a request in the frontend.
+2. Frontend serializes request as JSON envelope.
+3. Frontend attempts to launch HTA with URL-encoded request query string.
+4. HTA auto-parses startup request and executes immediately.
+5. For now, `show-toast` with payload `hello` opens a small popup that says hello.
+6. If browser blocks ActiveX launch path, frontend logs warning and uses simulated fallback response.
 
 ## Frontend details
 
 ### `index.html`
-- Hero section explains this is a future-ready local automation bridge.
+- Hero section explains auto-launch behavior and fallback behavior.
 - Task form includes:
   - task type select
   - payload text field
   - priority slider
-- Request preview area shows JSON payload and response.
-- Activity log records all actions and validation outcomes.
+- Dispatch actions include:
+  - Send to HTA worker
+  - Open Hello window via HTA
+  - Clear
+- Request preview area shows request payload and launch/simulation output.
+- Activity log records all actions, errors, and fallback warnings.
 
 ### `styles.css`
 - Dark-themed gradient background with glass-like cards.
 - Strong contrast and visible focus states for accessibility.
-- Responsive layout: side-by-side cards on larger screens, stacked on smaller devices.
-- Buttons use semantic color cues (primary, success, ghost).
+- Responsive card layout for desktop and mobile sizes.
+- Semantic button variants:
+  - primary (preview)
+  - success (send)
+  - accent (hello popup)
+  - ghost (clear)
+- Activity log color-codes success/error/warning states.
 
 ### `app.js`
-- `buildRequest()`: normalizes UI values into the API envelope.
-- `validateRequest()`: blocks empty payload and oversized input.
-- `mockHtaBackend()`: async placeholder for eventual HTA bridge transport.
+- `buildRequest(overrides)`: normalizes UI values into API envelope, supports forced overrides.
+- `getHtaAbsolutePath()`: resolves local `.hta` path when frontend is loaded from file URL.
+- `launchHtaWithRequest(request)`: uses `ActiveXObject('WScript.Shell')` to run `mshta.exe` with encoded request.
+- `sendRequest()`: validates request, attempts HTA launch, otherwise falls back to simulated response.
+- `sendHelloWindowRequest()`: sends a prepared `show-toast` + `hello` request.
 - `logActivity()`: timestamped event stream for operator clarity.
-- Automatically generates an initial preview on load.
 
 ## HTA backend details
 
 ### `local-worker.hta`
-- Provides a minimal windowed interface with a demo button.
+- Starts with `processStartupRequest()` on body load.
+- Reads `?request=...` from query string and executes immediately if present.
 - `executeRequest(rawJson)` currently:
   - parses incoming JSON
   - logs task type and payload
-  - returns a queue acknowledgment JSON response
-- Includes comments for future local Windows automation integration points.
+  - if task is `show-toast` with payload `hello`, opens a small popup saying hello
+  - returns queue acknowledgment JSON
+- Includes comments for future Windows automation expansion points.
 
 ## API contract
 
-Use `api-contract.txt` as the current canonical contract description.
-If frontend and HTA implementations diverge, update both code and the contract file together.
+Use `api-contract.txt` as canonical contract documentation for current integration.
+If frontend and HTA implementation diverge, update both code and contract together.
 
 ## How to run (current prototype)
 
-### Frontend
-- Open `index.html` in a browser.
-- Preview and send requests to observe serialization + simulated backend responses.
+### Frontend (integration attempt)
+- Best for Windows local usage: open `index.html` from filesystem and run in an environment where `ActiveXObject` is allowed.
+- Click **Send to HTA worker** or **Open Hello window via HTA**.
+- If launch is blocked, the UI will clearly log warning + simulation fallback.
 
 ### HTA
-- On Windows, run `local-worker.hta` directly.
-- Use “Run demo request” to test parse + response behavior.
+- On Windows, run `local-worker.hta` directly for manual testing.
+- Use **Run demo request** to test hello popup + response path without frontend.
 
 ## Suggested next implementation steps
 
-1. Replace `mockHtaBackend` with real transport.
-2. Add task allowlist and argument sanitization.
-3. Add response status polling and richer error display.
+1. Replace browser-dependent launch path with a more robust local bridge executable.
+2. Add allowlist + argument sanitization before enabling command execution.
+3. Add structured status lifecycle (`queued`, `running`, `complete`, `failed`) with retry support.
 4. Add persisted logs if this will be used operationally.

@@ -18,11 +18,25 @@
         log.appendChild(line);
       }
 
+      function showHelloPopup() {
+        try {
+          var shell = new ActiveXObject('WScript.Shell');
+          shell.Popup('hello', 3, 'Local Worker', 64);
+        } catch (error) {
+          alert('hello');
+        }
+      }
+
       function executeRequest(rawJson) {
         try {
           var request = JSON.parse(rawJson);
           appendLog('Received task type: ' + request.task.type);
           appendLog('Payload: ' + request.task.payload);
+
+          if (request.task.type === 'show-toast' && request.task.payload.toLowerCase() === 'hello') {
+            showHelloPopup();
+            appendLog('Displayed hello popup window.');
+          }
 
           // Future local automation hooks:
           // - WScript.Shell.Run(command)
@@ -40,8 +54,40 @@
         }
       }
 
+      function getQueryValue(name) {
+        var query = window.location.search || '';
+
+        if (!query || query.length < 2) {
+          return null;
+        }
+
+        var parts = query.substring(1).split('&');
+
+        for (var i = 0; i < parts.length; i += 1) {
+          var tuple = parts[i].split('=');
+          if (tuple[0] === name) {
+            return decodeURIComponent(tuple.slice(1).join('='));
+          }
+        }
+
+        return null;
+      }
+
+      function processStartupRequest() {
+        var encodedRequest = getQueryValue('request');
+
+        if (!encodedRequest) {
+          appendLog('No startup request provided. Waiting for manual demo action.');
+          return;
+        }
+
+        appendLog('Startup request found in query string. Executing immediately.');
+        var result = executeRequest(encodedRequest);
+        appendLog('Startup response: ' + result);
+      }
+
       function runDemo() {
-        var sample = '{"version":"1.0","task":{"type":"show-toast","payload":"hello from ui","priority":3}}';
+        var sample = '{"version":"1.0","task":{"type":"show-toast","payload":"hello","priority":3}}';
         var result = executeRequest(sample);
         appendLog('Response: ' + result);
       }
@@ -77,10 +123,13 @@
       }
     </style>
   </head>
-  <body>
+  <body onload="processStartupRequest()">
     <div class="frame">
       <h3>Local Worker (HTA)</h3>
-      <p>This is the local backend placeholder for future Windows automation tasks.</p>
+      <p>
+        This is the local backend placeholder for future Windows automation tasks. It now supports
+        immediate execution when launched with <code>?request=...</code>.
+      </p>
       <button onclick="runDemo()">Run demo request</button>
       <div id="log"></div>
     </div>

@@ -8,6 +8,7 @@
   --primary: #7f8cff;
   --primary-strong: #96a1ff;
   --success: #39d98a;
+  --accent: #ffc857;
   --danger: #ff6e8a;
   --shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
 }
@@ -136,6 +137,13 @@ input[type="range"] {
   font-weight: 700;
 }
 
+.btn.accent {
+  background: linear-gradient(140deg, #efb73a, var(--accent));
+  border-color: #ffd275;
+  color: #2c2100;
+  font-weight: 700;
+}
+
 .btn.ghost {
   background: transparent;
   border-color: #3a4a86;
@@ -155,7 +163,7 @@ input[type="range"] {
 
 .actions {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 0.6rem;
 }
 
@@ -175,6 +183,10 @@ input[type="range"] {
 
 .activity-log li.error {
   color: #ff9cb0;
+}
+
+.activity-log li.warning {
+  color: #ffd98a;
 }
 
 @media (max-width: 620px) {

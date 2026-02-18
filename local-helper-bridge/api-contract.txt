@@ -7,11 +7,14 @@ Defines the current lightweight contract between:
 1) Frontend app (`index.html` + `app.js`)
 2) Local Windows worker (`local-worker.hta`)
 
-Transport Options (future)
---------------------------
-- Window external call bridge
-- Local file drop/poll (JSON files)
-- Named pipe/localhost bridge via small local executable
+Current execution mode
+----------------------
+Primary mode now is direct HTA launch with an encoded request in query string:
+
+mshta.exe "<absolute_path_to_local-worker.hta>?request=<urlencoded-json>"
+
+If launch is unavailable (for example, a standard browser blocks ActiveXObject),
+frontend falls back to a local simulated response only for development visibility.
 
 Current Envelope
 ----------------
@@ -33,6 +36,12 @@ Validation Rules (frontend)
 - payload: required
 - payload length: <= 260 chars (safe early limit for Windows path/command ergonomics)
 
+Startup behavior (HTA)
+----------------------
+- On load, HTA reads query parameter `request`.
+- If present, HTA executes request immediately.
+- If absent, HTA waits for manual demo button interaction.
+
 Expected HTA Response
 ---------------------
 {
@@ -42,11 +51,11 @@ Expected HTA Response
   "error": "optional error text"
 }
 
-Task Semantics (planned)
-------------------------
-- open-path: open file/folder in Explorer
-- run-command: execute trusted command with controlled allowlist
-- show-toast: local message to user
+Task Semantics (current and planned)
+------------------------------------
+- show-toast + payload "hello": immediately opens a small hello popup window in HTA.
+- open-path: planned (open file/folder in Explorer)
+- run-command: planned (execute trusted command with controlled allowlist)
 
 Security Notes
 --------------

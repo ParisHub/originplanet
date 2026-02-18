@@ -12,8 +12,8 @@
         <p class="eyebrow">Local Automation Bridge</p>
         <h1>Future-ready UI for Windows local tasks</h1>
         <p class="subtitle">
-          This lightweight frontend previews jobs and sends structured commands to a companion
-          HTA worker when you are ready to wire in real local automation.
+          This lightweight frontend now attempts to launch the HTA automatically on send. If the
+          browser does not permit local automation APIs, you still get a simulated fallback.
         </p>
       </header>
 
@@ -44,12 +44,13 @@
         <div class="card">
           <h2>2) Dispatch</h2>
           <p>
-            In production this will call into the HTA backend. Right now it serializes the JSON
-            message and simulates a backend acknowledgment.
+            Send now attempts to execute through the HTA worker immediately. If automatic HTA launch
+            is blocked in your browser, a simulated response is displayed.
           </p>
           <pre id="requestPreview" class="preview" aria-live="polite"></pre>
           <div class="actions">
             <button id="sendBtn" class="btn success">Send to HTA worker</button>
+            <button id="helloBtn" class="btn accent">Open Hello window via HTA</button>
             <button id="clearBtn" class="btn ghost">Clear</button>
           </div>
         </div>
