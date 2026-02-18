@@ -6,9 +6,10 @@
   <HTA:APPLICATION
     ID="WinHello"
     APPLICATIONNAME="Windows 10 Hello App"
-    BORDER="dialog"
+    BORDER="thick"
     CAPTION="yes"
     SHOWINTASKBAR="yes"
+    RESIZE="yes"
     SINGLEINSTANCE="yes"
     SYSMENU="yes"
     SCROLL="no"
@@ -267,6 +268,40 @@
       for (i = 0; i < panelIds.length; i++) {
         setVisible(panelIds[i], panelIds[i] === panelId);
       }
+
+      syncWindowToContent();
+    }
+
+    function syncWindowToContent() {
+      var body = document.body;
+      var targetWidth;
+      var targetHeight;
+      var minWidth = 700;
+      var minHeight = 480;
+      var maxWidth = screen && screen.availWidth ? screen.availWidth : 1600;
+      var maxHeight = screen && screen.availHeight ? screen.availHeight : 1200;
+
+      if (!body || !window.resizeTo) {
+        return;
+      }
+
+      targetWidth = body.scrollWidth + 70;
+      targetHeight = body.scrollHeight + 120;
+
+      if (targetWidth < minWidth) {
+        targetWidth = minWidth;
+      }
+      if (targetHeight < minHeight) {
+        targetHeight = minHeight;
+      }
+      if (targetWidth > maxWidth) {
+        targetWidth = maxWidth;
+      }
+      if (targetHeight > maxHeight) {
+        targetHeight = maxHeight;
+      }
+
+      window.resizeTo(targetWidth, targetHeight);
     }
 
     function setAllStatuses(message) {
@@ -372,6 +407,7 @@
       setVisible("createDialog", true);
       el("createError").innerText = "";
       el("appName").focus();
+      syncWindowToContent();
     }
 
     function hideCreateDialog() {
@@ -379,12 +415,14 @@
       el("createError").innerText = "";
       el("appName").value = "";
       el("folderPath").value = "";
+      syncWindowToContent();
     }
 
     function showSnippetCreateDialog() {
       setVisible("snippetCreateDialog", true);
       el("snippetCreateError").innerText = "";
       el("snippetName").focus();
+      syncWindowToContent();
     }
 
     function hideSnippetCreateDialog() {
@@ -392,6 +430,7 @@
       el("snippetCreateError").innerText = "";
       el("snippetName").value = "";
       el("snippetContent").value = "";
+      syncWindowToContent();
     }
 
     function createLauncherButton() {
@@ -1052,6 +1091,7 @@
       updateLauncherDeleteToggleButton();
       updateSnippetDeleteToggleButton();
       loadAllEntries();
+      syncWindowToContent();
 
       bindEnterToAction("appName", createLauncherButton);
       bindEnterToAction("folderPath", createLauncherButton);

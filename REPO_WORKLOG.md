@@ -827,3 +827,46 @@ This keeps onboarding fast for new users while still being useful for future mai
 - Reviewed the rewritten README in plain text to confirm section order and readability.
 - Confirmed naming consistency with the current extension terminology.
 - Confirmed no code-path/runtime behavior changes were introduced in this pass.
+
+## 2026-02-18 — Dynamic HTA window resizing support
+
+### 1) Request interpreted
+
+Implemented dynamic window resizing behavior so OriginPlanet is no longer fixed to a dialog-style frame and can adjust to UI state changes.
+
+### 2) What changed in `originplanet.hta`
+
+- Enabled user-resizable HTA frame:
+  - `BORDER="dialog"` -> `BORDER="thick"`
+  - Added `RESIZE="yes"`
+- Added a new helper: `syncWindowToContent()`
+  - Computes target dimensions from current document body content (`scrollWidth` / `scrollHeight`).
+  - Adds small frame paddings for non-client area.
+  - Clamps to practical min/max bounds:
+    - min: `700 x 480`
+    - max: screen available size fallback (`1600 x 1200`)
+  - Calls `window.resizeTo(...)` when available.
+- Hooked dynamic resize helper to UI transitions:
+  - After panel changes in `showOnlyPanel(...)`
+  - After create-dialog open/close in launcher panel
+  - After create-dialog open/close in pasting panel
+  - On app load (`window.onload`) after initial data hydration
+
+### 3) Why this approach
+
+- HTA-level resizing (`RESIZE="yes"`) allows manual drag resizing by the user.
+- Content-sync resize avoids clipped UI when switching between compact/expanded views.
+- Min/max constraints prevent tiny unusable windows or oversized growth.
+- Kept implementation additive (small helper + call sites) to minimize regression risk.
+
+### 4) Validation done
+
+- Ran a focused source check for resize-related edits and call sites.
+- Ran `git diff --check` to confirm patch hygiene.
+- Captured a browser-rendered screenshot artifact of the updated UI for visual verification.
+
+### 5) Maintenance notes for future me
+
+- If users report the window "fighting" their manual size, consider making `syncWindowToContent()` opt-in only for panel transitions and not dialog toggles.
+- If additional panels are added, they will automatically trigger resize when shown via `showOnlyPanel(...)`.
+- If minimum size needs to be configurable, lift constants into top-level vars near other app state config.
