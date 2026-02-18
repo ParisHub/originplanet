@@ -25,24 +25,107 @@
       font-family: Segoe UI, Tahoma, sans-serif;
       margin: 0;
       padding: 18px;
-      background: linear-gradient(160deg, #f1f6ff 0%, #eaf0ff 45%, #f7efff 100%);
-      color: #1c2435;
+      background: linear-gradient(160deg, #e9f0ff 0%, #edf3ff 45%, #f2ecff 100%);
+      color: #1f2a40;
       box-sizing: border-box;
       overflow: auto;
     }
 
-    h3 {
-      margin: 0 0 14px 0;
-      font-size: 24px;
-      font-weight: 700;
+    .app-shell {
+      display: flex;
+      gap: 16px;
+      min-height: calc(100% - 4px);
+    }
+
+    .sidebar {
+      width: 250px;
+      background: rgba(24, 38, 72, 0.9);
+      border: 1px solid #314677;
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: 0 14px 30px rgba(17, 26, 53, 0.35);
+      box-sizing: border-box;
+      color: #e8eeff;
+      flex-shrink: 0;
+    }
+
+    .brand {
+      margin-bottom: 14px;
+      border-bottom: 1px solid #3b5390;
+      padding-bottom: 12px;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 18px;
       letter-spacing: 0.2px;
+    }
+
+    .brand p {
+      margin: 5px 0 0 0;
+      font-size: 12px;
+      color: #c6d3ff;
+    }
+
+    .nav-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      margin-bottom: 8px;
+      color: #aac0ff;
+      font-weight: 700;
+    }
+
+    .sidebar button {
+      width: 100%;
+      margin-bottom: 8px;
+      text-align: left;
+      border-radius: 11px;
+      border: 1px solid #4f68a5;
+      background: linear-gradient(180deg, #2f467f 0%, #253767 100%);
+      color: #ecf1ff;
+    }
+
+    .sidebar button.primary {
+      border-color: #8cb0ff;
+      background: linear-gradient(180deg, #4f74d6 0%, #3c5fb5 100%);
+    }
+
+    .sidebar-meta {
+      margin-top: 18px;
+      font-size: 12px;
+      color: #c4d0f0;
+      line-height: 1.45;
+      border-top: 1px solid #3b5390;
+      padding-top: 12px;
+    }
+
+    .workspace {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid #d7e1fd;
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 10px 26px rgba(31, 54, 123, 0.12);
+      box-sizing: border-box;
+    }
+
+    .panel-headline {
+      margin: 0;
+      font-size: 25px;
+      font-weight: 700;
       color: #22314d;
     }
 
     .subtitle {
-      margin: 0 0 18px 0;
+      margin: 7px 0 16px 0;
       font-size: 13px;
       color: #5a6787;
+      line-height: 1.45;
     }
 
     .row {
@@ -51,16 +134,6 @@
       gap: 10px;
       margin-bottom: 12px;
       flex-wrap: wrap;
-    }
-
-    .panel {
-      background: rgba(255, 255, 255, 0.9);
-      border: 1px solid #d9e2ff;
-      border-radius: 16px;
-      padding: 18px;
-      box-shadow: 0 10px 30px rgba(39, 61, 120, 0.12);
-      backdrop-filter: blur(2px);
-      box-sizing: border-box;
     }
 
     button {
@@ -75,6 +148,50 @@
       color: #22314d;
       cursor: pointer;
       transition: transform 0.06s ease, box-shadow 0.15s ease;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .stat-card {
+      border: 1px solid #d9e2ff;
+      border-radius: 13px;
+      padding: 11px;
+      background: linear-gradient(180deg, #ffffff 0%, #f6f8ff 100%);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: #5a6786;
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-size: 22px;
+      color: #1d2f57;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .quick-actions {
+      border: 1px solid #d7e1ff;
+      border-radius: 14px;
+      padding: 12px;
+      background: #f7f9ff;
+      margin-bottom: 14px;
+    }
+
+    .quick-actions-title {
+      margin: 0 0 9px 0;
+      font-size: 13px;
+      font-weight: 700;
+      color: #2f4270;
+      text-transform: uppercase;
+      letter-spacing: 0.35px;
     }
 
     button:hover {
@@ -375,6 +492,7 @@
     function openLauncher() {
       var count;
       showOnlyPanel("launcherPanel");
+      setActiveSection("Path Opener");
       resetDeleteMode("launcher");
       renderEntries("launcher");
       count = stateFor("launcher").entries.length;
@@ -384,6 +502,7 @@
     function openSnippetPanel() {
       var count;
       showOnlyPanel("snippetPanel");
+      setActiveSection("Pasting Snippets");
       resetDeleteMode("snippet");
       renderEntries("snippet");
       count = stateFor("snippet").entries.length;
@@ -392,6 +511,7 @@
 
     function openDataToolsPanel() {
       showOnlyPanel("dataToolsPanel");
+      setActiveSection("Data Tools");
       el("dataTxtPath").value = getDefaultTxtPath();
       setDataToolsStatus("Use Export to create a readable .txt or Import to load from one.");
     }
@@ -402,9 +522,18 @@
       hideCreateDialog();
       hideSnippetCreateDialog();
       showOnlyPanel("homePanel");
+      setActiveSection("Home");
+      updateHomeStats();
       setStatus("launcher", "");
       setStatus("snippet", "");
       setDataToolsStatus("");
+    }
+
+    function setActiveSection(title) {
+      var node = el("activeSectionLabel");
+      if (node) {
+        node.innerText = "Current section: " + title;
+      }
     }
 
     function setStatus(kind, message) {
@@ -493,6 +622,7 @@
       renderEntries("launcher");
       saveAllEntries();
       hideCreateDialog();
+      updateHomeStats();
       setStatus("launcher", "Added launcher entry: " + name);
     }
 
@@ -515,6 +645,7 @@
       renderEntries("snippet");
       saveAllEntries();
       hideSnippetCreateDialog();
+      updateHomeStats();
       setStatus("snippet", "Added snippet: " + name);
     }
 
@@ -537,7 +668,26 @@
       state.entries.splice(idx, 1);
       renderEntries(kind);
       saveAllEntries();
+      updateHomeStats();
       setStatus(kind, "Deleted " + state.kindLabel + ": " + removedName);
+    }
+
+    function updateHomeStats() {
+      var launcherCount = stateFor("launcher").entries.length;
+      var snippetCount = stateFor("snippet").entries.length;
+      var totalCount = launcherCount + snippetCount;
+
+      if (el("launcherCountValue")) {
+        el("launcherCountValue").innerText = launcherCount;
+      }
+
+      if (el("snippetCountValue")) {
+        el("snippetCountValue").innerText = snippetCount;
+      }
+
+      if (el("totalCountValue")) {
+        el("totalCountValue").innerText = totalCount;
+      }
     }
 
     function findEntryIndexById(entries, entryId) {
@@ -955,6 +1105,7 @@
         deserializeAllEntries(joined);
         renderAllEntryLists();
         saveAllEntries();
+        updateHomeStats();
 
         setDataToolsStatus("Imported data from: " + txtPath + " (" + filtered.length + " record" + (filtered.length === 1 ? "" : "s") + ").");
       } catch (e) {
@@ -1088,8 +1239,10 @@
       updateDeleteToggleButton("launcher");
       updateDeleteToggleButton("snippet");
       loadAllEntries();
+      updateHomeStats();
       setInitialWindowSize();
       showOnlyPanel("homePanel");
+      setActiveSection("Home");
       updateListViewportMaxHeight();
 
       window.onresize = function() {
@@ -1103,107 +1256,150 @@
   </script>
 </head>
 <body>
-  <div id="homePanel" class="panel">
-    <h3>OriginPlanet Launcher</h3>
-    <p class="subtitle">A tiny in-window launcher with persistent shortcuts.</p>
-
-    <div class="row">
-      <button class="primary" onclick="openLauncher()">Open Path Opener Extension</button>
-      <button class="primary" onclick="openSnippetPanel()">Open Pasting Extension</button>
-      <button class="ghost" onclick="openDataToolsPanel()">Open Data Import / Export</button>
-    </div>
-  </div>
-
-  <div id="launcherPanel" class="panel">
-    <div class="row">
-      <span class="panel-title">Path Opener Extension</span>
-      <div class="launcher-header-actions">
-        <button class="primary" onclick="showCreateDialog()">Create</button>
-        <button id="toggleDeleteButton" class="ghost" onclick="toggleDeleteModeLauncher()">Delete</button>
-        <button class="ghost" onclick="goHome()">Home</button>
-      </div>
-    </div>
-
-    <div id="createDialog">
-      <div class="form-row">
-        <label for="appName">Path Name</label>
-        <input id="appName" type="text" placeholder="Example: Work Docs Path" />
+  <div class="app-shell">
+    <div class="sidebar">
+      <div class="brand">
+        <h1>OriginPlanet</h1>
+        <p>Launcher + snippets for everyday workflows.</p>
       </div>
 
-      <div class="form-row">
-        <label for="folderPath">Path Target</label>
-        <input id="folderPath" type="text" placeholder="Example: C:\\Users\\You\\Documents" />
-      </div>
+      <div class="nav-label">Navigate</div>
+      <button class="primary" onclick="goHome()">Dashboard</button>
+      <button onclick="openLauncher()">Path Opener</button>
+      <button onclick="openSnippetPanel()">Pasting Snippets</button>
+      <button onclick="openDataToolsPanel()">Data Import / Export</button>
 
-      <div id="createError"></div>
-
-      <div class="row">
-        <button class="primary" onclick="createLauncherButton()">Confirm</button>
-        <button class="ghost" onclick="hideCreateDialog()">Cancel</button>
-      </div>
+      <div class="sidebar-meta" id="activeSectionLabel">Current section: Home</div>
     </div>
 
-    <div id="launcherButtons"></div>
-    <div id="launcherStatus"></div>
-  </div>
+    <div class="workspace">
+      <div id="homePanel" class="panel">
+        <h2 class="panel-headline">Control Center</h2>
+        <p class="subtitle">Everything is now organized into focused panels with persistent records and quick actions.</p>
 
-  <div id="snippetPanel" class="panel">
-    <div class="row">
-      <span class="panel-title">Pasting Extension</span>
-      <div class="snippet-header-actions">
-        <button class="primary" onclick="showSnippetCreateDialog()">Create</button>
-        <button id="toggleSnippetDeleteButton" class="ghost" onclick="toggleDeleteModeSnippet()">Delete</button>
-        <button class="ghost" onclick="goHome()">Home</button>
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-label">Path entries</div>
+            <div id="launcherCountValue" class="stat-value">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Snippet entries</div>
+            <div id="snippetCountValue" class="stat-value">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total records</div>
+            <div id="totalCountValue" class="stat-value">0</div>
+          </div>
+        </div>
+
+        <div class="quick-actions">
+          <div class="quick-actions-title">Quick actions</div>
+          <div class="row">
+            <button class="primary" onclick="openLauncher()">Open Path Opener</button>
+            <button class="primary" onclick="openSnippetPanel()">Open Pasting Snippets</button>
+            <button class="ghost" onclick="openDataToolsPanel()">Open Data Tools</button>
+          </div>
+        </div>
+
+        <div class="info-note">Use the left navigation to move between sections. The dashboard now provides at-a-glance counts so you can tell if data loaded as expected.</div>
+      </div>
+
+      <div id="launcherPanel" class="panel">
+        <div class="row">
+          <span class="panel-title">Path Opener</span>
+          <div class="launcher-header-actions">
+            <button class="primary" onclick="showCreateDialog()">Create</button>
+            <button id="toggleDeleteButton" class="ghost" onclick="toggleDeleteModeLauncher()">Delete</button>
+            <button class="ghost" onclick="goHome()">Dashboard</button>
+          </div>
+        </div>
+
+        <p class="subtitle">Store frequently used file or folder targets and open them instantly.</p>
+
+        <div id="createDialog">
+          <div class="form-row">
+            <label for="appName">Path Name</label>
+            <input id="appName" type="text" placeholder="Example: Work Docs Path" />
+          </div>
+
+          <div class="form-row">
+            <label for="folderPath">Path Target</label>
+            <input id="folderPath" type="text" placeholder="Example: C:\Users\You\Documents" />
+          </div>
+
+          <div id="createError"></div>
+
+          <div class="row">
+            <button class="primary" onclick="createLauncherButton()">Confirm</button>
+            <button class="ghost" onclick="hideCreateDialog()">Cancel</button>
+          </div>
+        </div>
+
+        <div id="launcherButtons"></div>
+        <div id="launcherStatus"></div>
+      </div>
+
+      <div id="snippetPanel" class="panel">
+        <div class="row">
+          <span class="panel-title">Pasting Snippets</span>
+          <div class="snippet-header-actions">
+            <button class="primary" onclick="showSnippetCreateDialog()">Create</button>
+            <button id="toggleSnippetDeleteButton" class="ghost" onclick="toggleDeleteModeSnippet()">Delete</button>
+            <button class="ghost" onclick="goHome()">Dashboard</button>
+          </div>
+        </div>
+
+        <p class="subtitle">Save reusable text blocks and click once to copy them into your clipboard.</p>
+
+        <div id="snippetCreateDialog">
+          <div class="form-row">
+            <label for="snippetName">Pasting Extension Name</label>
+            <input id="snippetName" type="text" placeholder="Example: Team Standup Update" />
+          </div>
+
+          <div class="form-row">
+            <label for="snippetContent">Pasting Content</label>
+            <textarea id="snippetContent" placeholder="Write the text you want copied when clicking this pasting extension button."></textarea>
+          </div>
+
+          <div id="snippetCreateError"></div>
+
+          <div class="row">
+            <button class="primary" onclick="createSnippetButton()">Confirm</button>
+            <button class="ghost" onclick="hideSnippetCreateDialog()">Cancel</button>
+          </div>
+        </div>
+
+        <div id="snippetButtons"></div>
+        <div id="snippetStatus"></div>
+      </div>
+
+      <div id="dataToolsPanel" class="panel">
+        <div class="row">
+          <span class="panel-title">Data Import / Export</span>
+          <div class="snippet-header-actions">
+            <button class="ghost" onclick="goHome()">Dashboard</button>
+          </div>
+        </div>
+
+        <div class="info-note">
+          Note for future maintenance: <strong>the <code>.opdb</code> file is user-specific and should stay next to each user's app copy.</strong>
+          Do not share or manually edit <code>.opdb</code>; use export/import <code>.txt</code> for readable transfer.
+        </div>
+
+        <div class="form-row">
+          <label for="dataTxtPath">Readable TXT Path</label>
+          <input id="dataTxtPath" type="text" placeholder="Example: C:\Users\You\Documents\originplanet_export.txt" />
+        </div>
+
+        <div class="row">
+          <button class="primary" onclick="exportDataToTxt()">Export to TXT</button>
+          <button class="primary" onclick="importDataFromTxt()">Import from TXT</button>
+        </div>
+
+        <div id="dataToolsStatus"></div>
       </div>
     </div>
-
-    <div id="snippetCreateDialog">
-      <div class="form-row">
-        <label for="snippetName">Pasting Extension Name</label>
-        <input id="snippetName" type="text" placeholder="Example: Team Standup Update" />
-      </div>
-
-      <div class="form-row">
-        <label for="snippetContent">Pasting Content</label>
-        <textarea id="snippetContent" placeholder="Write the text you want copied when clicking this pasting extension button."></textarea>
-      </div>
-
-      <div id="snippetCreateError"></div>
-
-      <div class="row">
-        <button class="primary" onclick="createSnippetButton()">Confirm</button>
-        <button class="ghost" onclick="hideSnippetCreateDialog()">Cancel</button>
-      </div>
-    </div>
-
-    <div id="snippetButtons"></div>
-    <div id="snippetStatus"></div>
-  </div>
-
-  <div id="dataToolsPanel" class="panel">
-    <div class="row">
-      <span class="panel-title">Data Import / Export</span>
-      <div class="snippet-header-actions">
-        <button class="ghost" onclick="goHome()">Home</button>
-      </div>
-    </div>
-
-    <div class="info-note">
-      Note for future maintenance: <strong>the <code>.opdb</code> file is user-specific and should stay next to each user's app copy.</strong>
-      Do not share or manually edit <code>.opdb</code>; use export/import <code>.txt</code> for readable transfer.
-    </div>
-
-    <div class="form-row">
-      <label for="dataTxtPath">Readable TXT Path</label>
-      <input id="dataTxtPath" type="text" placeholder="Example: C:\\Users\\You\\Documents\\originplanet_export.txt" />
-    </div>
-
-    <div class="row">
-      <button class="primary" onclick="exportDataToTxt()">Export to TXT</button>
-      <button class="primary" onclick="importDataFromTxt()">Import from TXT</button>
-    </div>
-
-    <div id="dataToolsStatus"></div>
   </div>
 
 </body>
