@@ -28,8 +28,7 @@
       background: linear-gradient(160deg, #f1f6ff 0%, #eaf0ff 45%, #f7efff 100%);
       color: #1c2435;
       box-sizing: border-box;
-      height: 100vh;
-      overflow: hidden;
+      overflow: auto;
     }
 
     h3 {
@@ -62,8 +61,6 @@
       box-shadow: 0 10px 30px rgba(39, 61, 120, 0.12);
       backdrop-filter: blur(2px);
       box-sizing: border-box;
-      height: 100%;
-      min-height: 0;
     }
 
     button {
@@ -124,7 +121,7 @@
       overflow-y: auto;
       overflow-x: hidden;
       padding-right: 4px;
-      max-height: 58vh;
+      max-height: 420px;
     }
 
     .launcher-row,
@@ -267,6 +264,26 @@
 
       for (i = 0; i < panelIds.length; i++) {
         setVisible(panelIds[i], panelIds[i] === panelId);
+      }
+    }
+
+    function updateListViewportMaxHeight() {
+      var viewportHeight = document.documentElement && document.documentElement.clientHeight ? document.documentElement.clientHeight : 760;
+      var targetHeight = viewportHeight - 320;
+      var minimumHeight = 180;
+      var launcherList = el("launcherButtons");
+      var snippetList = el("snippetButtons");
+
+      if (targetHeight < minimumHeight) {
+        targetHeight = minimumHeight;
+      }
+
+      if (launcherList) {
+        launcherList.style.maxHeight = targetHeight + "px";
+      }
+
+      if (snippetList) {
+        snippetList.style.maxHeight = targetHeight + "px";
       }
     }
 
@@ -1093,6 +1110,12 @@
       updateSnippetDeleteToggleButton();
       loadAllEntries();
       setInitialWindowSize();
+      showOnlyPanel("homePanel");
+      updateListViewportMaxHeight();
+
+      window.onresize = function() {
+        updateListViewportMaxHeight();
+      };
 
       bindEnterToAction("appName", createLauncherButton);
       bindEnterToAction("folderPath", createLauncherButton);

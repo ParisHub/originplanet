@@ -1132,3 +1132,74 @@ Moved panel visibility/rendering back to conservative HTA-safe behavior:
 
 - Prefer HTA-safe layout primitives (`block`, fixed/viewport-capped heights, overflow scroll) over complex flex-only assumptions.
 - If a modern host is introduced later, flex layout can be reintroduced behind host/version checks.
+
+## 2026-02-18 — Stabilization pass after repeated UI regressions
+
+### 1) Situation and goal
+
+User reported severe regression from current branch state:
+- extension panels rendering as white/blank,
+- inability to reliably access expected screens.
+
+Goal for this pass was stability-first repair (not another fragile tweak):
+- restore reliable Home/extension visibility,
+- keep one-time startup window sizing,
+- keep manual resizing,
+- keep extension list scroll behavior.
+
+### 2) Root-cause direction used
+
+Likely fragility factors in HTA/IE host:
+- viewport units (`vh`) and overflow clipping behavior,
+- aggressive full-height assumptions across `body`/`.panel`,
+- visibility/layout interactions that are fine in modern browsers but unreliable in HTA runtime.
+
+### 3) Changes made in this stabilization pass
+
+#### A) Removed fragile viewport-unit + clipping dependency
+
+- Replaced `body { height: 100vh; overflow: hidden; }` with conservative:
+  - `body { overflow: auto; }`
+- Kept `html, body { height: 100%; }` for baseline compatibility.
+
+#### B) Removed hard full-height panel forcing
+
+- Simplified `.panel` by removing `height: 100%` and `min-height` forcing.
+- This avoids parent-height chain dependence that can produce blank rendering in older hosts.
+
+#### C) Hardened panel visibility initialization and transitions
+
+- Kept `setVisible(...)` with `block/none`.
+- Kept `showOnlyPanel(...)` using `setVisible(...)` for top-level panels.
+- Explicitly call `showOnlyPanel("homePanel")` on startup to guarantee Home is visible from a known state.
+
+#### D) Retained scrollability without `vh` dependence
+
+- Replaced static `58vh` list cap with HTA-safe JS computed pixel cap.
+- Added `updateListViewportMaxHeight()`:
+  - computes target list height from `document.documentElement.clientHeight - 320`,
+  - enforces minimum `180px`,
+  - applies to both `#launcherButtons` and `#snippetButtons`.
+- Called on:
+  - startup,
+  - `window.onresize`.
+
+### 4) Behavioral outcome intended
+
+- Home screen is explicitly restored on load.
+- Extension panel switching uses stable `block/none` behavior.
+- Lists remain scrollable in smaller windows.
+- Startup window sizing remains one-time only (`setInitialWindowSize()`), with no continuous auto-resize loop.
+
+### 5) Validation done
+
+- Source inspection for all changed visibility/layout initialization call sites.
+- Source inspection confirming no reintroduction of continuous auto window resizing.
+- `git diff --check` for patch hygiene.
+- Attempted screenshot automation; browser-tool network/runtime remains unstable in this environment.
+
+### 6) Future maintenance guardrails
+
+- Prefer HTA-safe layout primitives and avoid viewport-unit hard dependencies.
+- Keep visibility utility generic; avoid coupling visibility helpers with layout mode changes.
+- When adding sizing logic, favor explicit startup setup + lightweight runtime recalculation for internal scroll containers only.
