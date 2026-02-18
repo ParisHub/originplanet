@@ -22,6 +22,15 @@ Then open:
 
 - `http://localhost:4173`
 
+## Features
+
+- **Separated chapter surfaces**
+  - TOC entries (logical chapter structure)
+  - Spine entries (document reading order)
+- **View mode toggle for each chapter**
+  - **Rendered**: iframe preview with inlined assets where possible
+  - **Source**: raw chapter XHTML/HTML markup in a code-style text block
+
 ## How it works
 
 1. Reads the selected `.epub` file as a ZIP archive via `JSZip`.
@@ -32,8 +41,10 @@ Then open:
 6. Renders:
    - TOC entries in the Chapters panel
    - Spine items in the Spine panel
-7. Clicking an item loads it into an iframe preview.
-8. Inlines common assets (images + stylesheets) for better rendering inside the iframe.
+7. Clicking an item loads the chapter and stores both:
+   - Raw source markup
+   - Processed rendered markup
+8. The view toggle switches between source and rendered modes without reloading the chapter from disk.
 
 ## Known limitations
 
@@ -43,7 +54,7 @@ Then open:
 
 ## Files
 
-- `index.html` — UI shell
-- `styles.css` — layout and component styling
-- `app.js` — EPUB parsing + chapter rendering logic
+- `index.html` — UI shell and toggle controls
+- `styles.css` — layout and component styling (including toggle/source panel styles)
+- `app.js` — EPUB parsing + chapter rendering/source toggle logic
 - `WORKLOG.md` — implementation notes intended for future maintenance

@@ -27,16 +27,27 @@ Create a standalone `.epub` visualizer in a separate folder that exposes chapter
   - Spine list (physical reading order documents)
 - Reason: user asked to "display all different chapters etc separately".
 
-### 4) Preview rendering
-- Uses `iframe.srcdoc` to isolate chapter content.
-- Tries to inline:
+### 4) Preview rendering + source inspection toggle (new)
+- Added a chapter header control that toggles between:
+  - **Rendered** mode (`iframe`) to view chapter output
+  - **Source** mode (`pre`) to inspect raw chapter markup
+- Implementation detail:
+  - On chapter load, keep two buffers:
+    - `currentSourceMarkup` (raw entry from EPUB zip)
+    - `currentRenderedMarkup` (asset-inlined markup used by iframe)
+  - Toggle only flips visible panel and reuses cached buffers.
+- Reason: requested ability to switch between visual output and underlying chapter code quickly.
+
+### 5) Asset inlining for rendered mode
+- In rendered mode, chapter markup still goes through best-effort inlining of:
   - linked stylesheets
   - image sources
 - Reason: improves fidelity without needing filesystem URLs.
 
-### 5) Resilience
+### 6) Resilience
 - Status text updates for load errors and partial parsing outcomes.
 - Missing nav/toc still shows spine content.
+- If chapter fails to load, both source and rendered buffers are populated with error text.
 
 ## Caveats I intentionally accepted
 
@@ -52,6 +63,8 @@ Create a standalone `.epub` visualizer in a separate folder that exposes chapter
 4. Add chapter search/filter.
 5. Add previous/next controls for spine navigation.
 6. Add EPUB metadata panel (title, creator, language, identifier).
+7. Add syntax highlighting in Source view.
+8. Add optional split view (rendered + source side-by-side).
 
 ## Manual verification checklist used
 
@@ -59,5 +72,6 @@ Create a standalone `.epub` visualizer in a separate folder that exposes chapter
 - [x] File chooser accepts `.epub`.
 - [x] Spine list renders.
 - [x] TOC list renders when nav/NCX is present.
-- [x] Clicking TOC/spine item updates iframe preview.
+- [x] Clicking TOC/spine item updates chapter content.
+- [x] Rendered/Source toggle switches chapter panel mode.
 - [x] Status message updates on success/failure.

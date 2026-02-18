@@ -34,8 +34,15 @@
       </section>
 
       <section class="panel chapter-viewer">
-        <h2 id="chapterTitle">Chapter Preview</h2>
+        <div class="chapter-header">
+          <h2 id="chapterTitle">Chapter Preview</h2>
+          <div class="view-toggle" role="group" aria-label="Chapter display mode">
+            <button id="renderedViewBtn" type="button" class="view-toggle-btn active">Rendered</button>
+            <button id="sourceViewBtn" type="button" class="view-toggle-btn">Source</button>
+          </div>
+        </div>
         <iframe id="chapterFrame" title="Chapter content preview"></iframe>
+        <pre id="chapterSource" class="chapter-source" hidden></pre>
       </section>
     </main>
   </body>

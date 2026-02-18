@@ -4,10 +4,19 @@ const tocList = document.getElementById("tocList");
 const spineList = document.getElementById("spineList");
 const chapterTitle = document.getElementById("chapterTitle");
 const chapterFrame = document.getElementById("chapterFrame");
+const chapterSource = document.getElementById("chapterSource");
+const renderedViewBtn = document.getElementById("renderedViewBtn");
+const sourceViewBtn = document.getElementById("sourceViewBtn");
 
 let zipRef = null;
 let opfBasePath = "";
 let spineDocuments = [];
+let currentViewMode = "rendered";
+let currentRenderedMarkup = "";
+let currentSourceMarkup = "";
+
+renderedViewBtn.addEventListener("click", () => setViewMode("rendered"));
+sourceViewBtn.addEventListener("click", () => setViewMode("source"));
 
 input.addEventListener("change", async (event) => {
   const [file] = event.target.files;
@@ -83,7 +92,29 @@ function resetView() {
   tocList.innerHTML = "";
   spineList.innerHTML = "";
   chapterTitle.textContent = "Chapter Preview";
+  currentRenderedMarkup = "";
+  currentSourceMarkup = "";
   chapterFrame.srcdoc = "";
+  chapterSource.textContent = "";
+  setViewMode("rendered");
+}
+
+function setViewMode(mode) {
+  currentViewMode = mode;
+  const showRendered = mode === "rendered";
+
+  renderedViewBtn.classList.toggle("active", showRendered);
+  sourceViewBtn.classList.toggle("active", !showRendered);
+
+  chapterFrame.hidden = !showRendered;
+  chapterSource.hidden = showRendered;
+
+  if (showRendered) {
+    chapterFrame.srcdoc = currentRenderedMarkup;
+    return;
+  }
+
+  chapterSource.textContent = currentSourceMarkup || "No chapter source loaded yet.";
 }
 
 function updateStatus(message) {
@@ -269,15 +300,19 @@ function renderSpine(items) {
 }
 
 async function openDocument(path, label) {
+  chapterTitle.textContent = label;
+
   try {
-    const html = await readZipText(path);
-    const embedded = await inlineReferencedAssets(html, path);
-    chapterTitle.textContent = label;
-    chapterFrame.srcdoc = embedded;
+    const rawHtml = await readZipText(path);
+    const embedded = await inlineReferencedAssets(rawHtml, path);
+    currentSourceMarkup = rawHtml;
+    currentRenderedMarkup = embedded;
   } catch (error) {
-    chapterTitle.textContent = label;
-    chapterFrame.srcdoc = `<pre>Unable to load ${path}\n\n${escapeHtml(error.message)}</pre>`;
+    currentSourceMarkup = `Unable to load ${path}\n\n${error.message}`;
+    currentRenderedMarkup = `<pre>${escapeHtml(currentSourceMarkup)}</pre>`;
   }
+
+  setViewMode(currentViewMode);
 }
 
 async function inlineReferencedAssets(html, sourcePath) {

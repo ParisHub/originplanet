@@ -84,6 +84,43 @@ main {
   grid-column: span 12;
 }
 
+.chapter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.8rem;
+}
+
+.chapter-header h2 {
+  margin: 0;
+}
+
+.view-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  overflow: hidden;
+}
+
+.view-toggle-btn {
+  border: none;
+  border-right: 1px solid var(--border);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+}
+
+.view-toggle-btn:last-child {
+  border-right: none;
+}
+
+.view-toggle-btn.active {
+  background: color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
 .toc-list,
 .spine-list {
   list-style: none;
@@ -125,6 +162,19 @@ main {
   border: 1px solid var(--border);
   border-radius: 8px;
   background: #fff;
+}
+
+.chapter-source {
+  width: 100%;
+  min-height: 65vh;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: color-mix(in srgb, var(--panel) 85%, black 15%);
 }
 
 @media (max-width: 900px) {
