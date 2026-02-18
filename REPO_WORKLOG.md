@@ -103,3 +103,51 @@ If adding another feature panel with persisted entries:
 - Source-level review of `originplanet.hta` after refactor.
 - `git diff --check` for whitespace/patch hygiene.
 - Runtime smoke via screenshot flow in browser container (HTML rendering context; not full HTA/ActiveX).
+
+## 2026-02-18 — UI/UX redesign pass for `originplanet.hta`
+
+### Why this pass happened
+- User feedback indicated functionality was okay but interface quality was poor.
+- Objective: keep all existing features, but improve clarity, hierarchy, and navigation flow.
+
+### What changed
+- Reworked the layout into an app-shell structure:
+  - new left sidebar for persistent navigation,
+  - main workspace area for active panel content.
+- Added dashboard-style home panel with summary stats:
+  - path entry count,
+  - snippet entry count,
+  - total record count.
+- Added section-context indicator (`Current section: ...`) so users always know where they are.
+- Improved visual hierarchy:
+  - clearer panel headings,
+  - stronger card styling for metrics,
+  - quick-actions module,
+  - updated spacing and contrast.
+- Kept existing core behaviors unchanged:
+  - create/delete launcher entries,
+  - create/delete snippets,
+  - clipboard copy,
+  - import/export data tools.
+
+### JS behavior updates
+- Added `setActiveSection(title)` to keep sidebar section label in sync.
+- Added `updateHomeStats()` and wired it to:
+  - initial load,
+  - create actions,
+  - delete actions,
+  - import action,
+  - home navigation.
+- Updated panel-open functions (`openLauncher`, `openSnippetPanel`, `openDataToolsPanel`) to set section context.
+
+### Validation notes
+- Used syntax sanity check via Node parse of inline script block.
+- Performed patch hygiene check with `git diff --check`.
+- Captured browser-rendered screenshot of updated interface for visual verification (HTML rendering context, not full ActiveX HTA runtime).
+
+### Future-me reminders
+- The sidebar/dashboard additions are intentionally presentation-layer only; data format and persistence are untouched.
+- If adding new feature sections later, update:
+  - sidebar nav buttons,
+  - `setActiveSection` usage,
+  - dashboard stat model if the section persists records.
