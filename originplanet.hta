@@ -121,6 +121,9 @@
       flex-direction: column;
       gap: 8px;
       margin-top: 10px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-right: 4px;
     }
 
     .launcher-row,
@@ -282,11 +285,12 @@
       var maxHeight = screen && screen.availHeight ? screen.availHeight : 1200;
 
       if (!body || !window.resizeTo) {
+        updateScrollableListHeights();
         return;
       }
 
       targetWidth = body.scrollWidth + 70;
-      targetHeight = body.scrollHeight + 120;
+      targetHeight = window.outerHeight || body.scrollHeight + 120;
 
       if (targetWidth < minWidth) {
         targetWidth = minWidth;
@@ -302,6 +306,23 @@
       }
 
       window.resizeTo(targetWidth, targetHeight);
+      updateScrollableListHeights();
+    }
+
+    function updateScrollableListHeights() {
+      var launcherList = el("launcherButtons");
+      var snippetList = el("snippetButtons");
+      var minimumHeight = 140;
+      var availableHeight = (document.documentElement && document.documentElement.clientHeight ? document.documentElement.clientHeight : 760) - 260;
+      var targetListHeight = availableHeight > minimumHeight ? availableHeight : minimumHeight;
+
+      if (launcherList) {
+        launcherList.style.maxHeight = targetListHeight + "px";
+      }
+
+      if (snippetList) {
+        snippetList.style.maxHeight = targetListHeight + "px";
+      }
     }
 
     function setAllStatuses(message) {
@@ -407,7 +428,6 @@
       setVisible("createDialog", true);
       el("createError").innerText = "";
       el("appName").focus();
-      syncWindowToContent();
     }
 
     function hideCreateDialog() {
@@ -415,14 +435,12 @@
       el("createError").innerText = "";
       el("appName").value = "";
       el("folderPath").value = "";
-      syncWindowToContent();
     }
 
     function showSnippetCreateDialog() {
       setVisible("snippetCreateDialog", true);
       el("snippetCreateError").innerText = "";
       el("snippetName").focus();
-      syncWindowToContent();
     }
 
     function hideSnippetCreateDialog() {
@@ -430,7 +448,6 @@
       el("snippetCreateError").innerText = "";
       el("snippetName").value = "";
       el("snippetContent").value = "";
-      syncWindowToContent();
     }
 
     function createLauncherButton() {
@@ -1092,6 +1109,10 @@
       updateSnippetDeleteToggleButton();
       loadAllEntries();
       syncWindowToContent();
+
+      window.onresize = function() {
+        updateScrollableListHeights();
+      };
 
       bindEnterToAction("appName", createLauncherButton);
       bindEnterToAction("folderPath", createLauncherButton);

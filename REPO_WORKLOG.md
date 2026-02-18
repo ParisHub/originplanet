@@ -870,3 +870,56 @@ Implemented dynamic window resizing behavior so OriginPlanet is no longer fixed 
 - If users report the window "fighting" their manual size, consider making `syncWindowToContent()` opt-in only for panel transitions and not dialog toggles.
 - If additional panels are added, they will automatically trigger resize when shown via `showOnlyPanel(...)`.
 - If minimum size needs to be configurable, lift constants into top-level vars near other app state config.
+
+## 2026-02-18 — Resizing flicker follow-up + scrollable extension button lists
+
+### 1) User feedback addressed
+
+Follow-up issues reported after the first dynamic resize pass:
+
+1. Vertical-only manual resizing showed flicker.
+2. Extension button lists were cut off when window height became small.
+
+### 2) Implementation adjustments
+
+#### A) Reduced resize contention during vertical manual resizing
+
+- Kept the HTA window user-resizable (`BORDER="thick"` + `RESIZE="yes"` unchanged).
+- Updated `syncWindowToContent()` so it no longer force-recomputes height from content on each call.
+  - Width still adapts to content (`body.scrollWidth + padding`).
+  - Height now respects current window height (`window.outerHeight`) with min/max clamping.
+- Removed `syncWindowToContent()` calls from dialog show/hide handlers to avoid unnecessary resize nudges during rapid UI interactions.
+
+Why this helps:
+- The prior behavior was more likely to fight user-driven vertical adjustments by recomputing height from content snapshots.
+- Respecting current height avoids that tug-of-war while preserving dynamic width behavior and initial layout sizing.
+
+#### B) Made extension button lists scrollable
+
+- Updated list container CSS for both:
+  - `#launcherButtons`
+  - `#snippetButtons`
+- Added:
+  - `overflow-y: auto;`
+  - `overflow-x: hidden;`
+  - `padding-right: 4px;`
+- Added `updateScrollableListHeights()` helper to compute a practical `maxHeight` based on viewport height with a floor value.
+- Invoked `updateScrollableListHeights()`:
+  - from `syncWindowToContent()`
+  - on native `window.onresize`
+
+Why this helps:
+- When window height is reduced, the button areas now get their own vertical scroll instead of clipping content.
+- The layout remains usable even in constrained window sizes.
+
+### 3) Validation performed
+
+- Ran source inspection focused on resize logic and scroll container behavior.
+- Ran `git diff --check` for patch hygiene.
+- Attempted screenshot capture via browser tool; current container/browser path to the local app remains unavailable in this environment.
+
+### 4) Maintenance notes for future me
+
+- If product intent later requires auto-height growth again, reintroduce it behind a feature flag and disable it while user is actively resizing.
+- If panel header/content structure changes significantly, revisit the `availableHeight - 260` offset in `updateScrollableListHeights()`.
+- If UI must support very tiny windows, lower the list `minimumHeight` from `140` after usability test.
