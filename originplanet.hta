@@ -59,6 +59,9 @@
       font-size: 13px;
       border-radius: 10px;
       border: 1px solid #b8c6ef;
+      width: auto;
+      min-width: 0;
+      white-space: nowrap;
       background: linear-gradient(180deg, #ffffff 0%, #edf2ff 100%);
       color: #22314d;
       cursor: pointer;
@@ -104,19 +107,23 @@
       align-items: center;
     }
 
-    #launcherPanel {
+    #launcherPanel,
+    #snippetPanel,
+    #dataToolsPanel {
       display: none;
       margin-top: 14px;
     }
 
-    #launcherButtons {
+    #launcherButtons,
+    #snippetButtons {
       display: flex;
       flex-direction: column;
       gap: 8px;
       margin-top: 10px;
     }
 
-    .launcher-row {
+    .launcher-row,
+    .snippet-row {
       display: flex;
       align-items: center;
       gap: 8px;
@@ -126,13 +133,22 @@
       padding: 7px;
     }
 
-    .launcher-item {
+    .launcher-item,
+    .snippet-item {
       background: linear-gradient(180deg, #f7fbff 0%, #e8f1ff 100%);
       border: 1px solid #9dbbff;
       border-radius: 9px;
-      min-width: 220px;
+      width: auto;
       text-align: left;
       font-weight: 600;
+    }
+
+    .launcher-header-actions,
+    .snippet-header-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: 12px;
     }
 
     .delete-item {
@@ -142,7 +158,8 @@
       font-size: 12px;
     }
 
-    #createDialog {
+    #createDialog,
+    #snippetCreateDialog {
       display: none;
       margin-top: 14px;
       padding: 14px;
@@ -166,7 +183,8 @@
       letter-spacing: 0.3px;
     }
 
-    .form-row input {
+    .form-row input,
+    .form-row textarea {
       width: 100%;
       box-sizing: border-box;
       padding: 8px;
@@ -174,9 +192,16 @@
       border-radius: 9px;
       border: 1px solid #c9d6ff;
       background: #fff;
+      font-family: inherit;
     }
 
-    #createError {
+    .form-row textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    #createError,
+    #snippetCreateError {
       color: #b01537;
       font-size: 13px;
       min-height: 18px;
@@ -184,7 +209,9 @@
       font-weight: 600;
     }
 
-    #launcherStatus {
+    #launcherStatus,
+    #snippetStatus,
+    #dataToolsStatus {
       font-size: 12px;
       color: #4c5878;
       margin-top: 8px;
@@ -197,13 +224,30 @@
       font-size: 18px;
       color: #2a3a61;
     }
+
+    .info-note {
+      margin: 10px 0 12px 0;
+      font-size: 12px;
+      color: #4b5878;
+      background: #f3f7ff;
+      border: 1px solid #d9e4ff;
+      border-radius: 9px;
+      padding: 8px 10px;
+    }
+
   </style>
   <script language="javascript">
     var launcherEntries = [];
-    var nextEntryId = 1;
-    var deleteMode = false;
+    var nextLauncherEntryId = 1;
+    var launcherDeleteMode = false;
+
+    var snippetEntries = [];
+    var nextSnippetEntryId = 1;
+    var snippetDeleteMode = false;
+
     var activeDataFilePath = "";
     var pathCandidatesCache = null;
+    var panelIds = ["homePanel", "launcherPanel", "snippetPanel", "dataToolsPanel"];
 
     function el(id) {
       return document.getElementById(id);
@@ -217,38 +261,111 @@
       el("msg").innerText = "Hello";
     }
 
+    function showOnlyPanel(panelId) {
+      var i;
+
+      for (i = 0; i < panelIds.length; i++) {
+        setVisible(panelIds[i], panelIds[i] === panelId);
+      }
+    }
+
+    function setAllStatuses(message) {
+      setLauncherStatus(message);
+      setSnippetStatus(message);
+      setDataToolsStatus(message);
+    }
+
+    function findEntryIndexById(entries, entryId) {
+      var i;
+
+      for (i = 0; i < entries.length; i++) {
+        if (entries[i].id === entryId) {
+          return i;
+        }
+      }
+
+      return -1;
+    }
+
+    function bindEnterToAction(inputId, action) {
+      el(inputId).onkeypress = function(evt) {
+        evt = evt || window.event;
+        if (evt.keyCode === 13) {
+          action();
+        }
+      };
+    }
+
+    function renderAllEntryLists() {
+      renderLauncherEntries();
+      renderSnippetEntries();
+    }
+
     function openLauncher() {
-      setVisible("homePanel", false);
-      setVisible("launcherPanel", true);
-      deleteMode = false;
-      updateDeleteToggleButton();
+      showOnlyPanel("launcherPanel");
+      launcherDeleteMode = false;
+      updateLauncherDeleteToggleButton();
       renderLauncherEntries();
       setLauncherStatus("Loaded " + launcherEntries.length + " entr" + (launcherEntries.length === 1 ? "y" : "ies") + ".");
     }
 
+    function openSnippetPanel() {
+      showOnlyPanel("snippetPanel");
+      snippetDeleteMode = false;
+      updateSnippetDeleteToggleButton();
+      renderSnippetEntries();
+      setSnippetStatus("Loaded " + snippetEntries.length + " snippet" + (snippetEntries.length === 1 ? "" : "s") + ".");
+    }
+
+    function openDataToolsPanel() {
+      showOnlyPanel("dataToolsPanel");
+      el("dataTxtPath").value = getDefaultTxtPath();
+      setDataToolsStatus("Use Export to create a readable .txt or Import to load from one.");
+    }
+
     function goHome() {
-      deleteMode = false;
-      updateDeleteToggleButton();
+      launcherDeleteMode = false;
+      snippetDeleteMode = false;
+      updateLauncherDeleteToggleButton();
+      updateSnippetDeleteToggleButton();
       hideCreateDialog();
-      setVisible("launcherPanel", false);
-      setVisible("homePanel", true);
+      hideSnippetCreateDialog();
+      showOnlyPanel("homePanel");
       setLauncherStatus("");
+      setSnippetStatus("");
+      setDataToolsStatus("");
     }
 
     function toggleDeleteMode() {
-      deleteMode = !deleteMode;
-      updateDeleteToggleButton();
+      launcherDeleteMode = !launcherDeleteMode;
+      updateLauncherDeleteToggleButton();
       renderLauncherEntries();
-      setLauncherStatus(deleteMode ? "Delete mode enabled." : "Delete mode disabled.");
+      setLauncherStatus(launcherDeleteMode ? "Delete mode enabled." : "Delete mode disabled.");
     }
 
-    function updateDeleteToggleButton() {
+    function toggleSnippetDeleteMode() {
+      snippetDeleteMode = !snippetDeleteMode;
+      updateSnippetDeleteToggleButton();
+      renderSnippetEntries();
+      setSnippetStatus(snippetDeleteMode ? "Delete mode enabled." : "Delete mode disabled.");
+    }
+
+    function updateLauncherDeleteToggleButton() {
       var toggleBtn = el("toggleDeleteButton");
       if (!toggleBtn) {
         return;
       }
-      toggleBtn.innerText = deleteMode ? "Done" : "Delete";
-      toggleBtn.title = deleteMode ? "Exit delete mode" : "Enter delete mode";
+      toggleBtn.innerText = launcherDeleteMode ? "Done" : "Delete";
+      toggleBtn.title = launcherDeleteMode ? "Exit delete mode" : "Enter delete mode";
+    }
+
+    function updateSnippetDeleteToggleButton() {
+      var toggleBtn = el("toggleSnippetDeleteButton");
+      if (!toggleBtn) {
+        return;
+      }
+      toggleBtn.innerText = snippetDeleteMode ? "Done" : "Delete";
+      toggleBtn.title = snippetDeleteMode ? "Exit delete mode" : "Enter delete mode";
     }
 
     function showCreateDialog() {
@@ -264,6 +381,19 @@
       el("folderPath").value = "";
     }
 
+    function showSnippetCreateDialog() {
+      setVisible("snippetCreateDialog", true);
+      el("snippetCreateError").innerText = "";
+      el("snippetName").focus();
+    }
+
+    function hideSnippetCreateDialog() {
+      setVisible("snippetCreateDialog", false);
+      el("snippetCreateError").innerText = "";
+      el("snippetName").value = "";
+      el("snippetContent").value = "";
+    }
+
     function createLauncherButton() {
       var name = trimValue(el("appName").value);
       var folderPath = trimValue(el("folderPath").value);
@@ -274,34 +404,48 @@
       }
 
       launcherEntries.push({
-        id: nextEntryId++,
+        id: nextLauncherEntryId++,
         name: name,
         folderPath: folderPath
       });
 
       renderLauncherEntries();
-      saveLauncherEntries();
+      saveAllEntries();
       hideCreateDialog();
       setLauncherStatus("Added launcher entry: " + name);
     }
 
-    function removeLauncherEntry(entryId) {
-      var idx = -1;
-      var removedName = "";
-      var i;
+    function createSnippetButton() {
+      var name = trimValue(el("snippetName").value);
+      var content = trimValue(el("snippetContent").value);
 
-      for (i = 0; i < launcherEntries.length; i++) {
-        if (launcherEntries[i].id === entryId) {
-          idx = i;
-          removedName = launcherEntries[i].name;
-          break;
-        }
+      if (!name || !content) {
+        el("snippetCreateError").innerText = "Please provide both snippet name and snippet content.";
+        return;
       }
+
+      snippetEntries.push({
+        id: nextSnippetEntryId++,
+        name: name,
+        content: content
+      });
+
+      renderSnippetEntries();
+      saveAllEntries();
+      hideSnippetCreateDialog();
+      setSnippetStatus("Added snippet: " + name);
+    }
+
+    function removeLauncherEntry(entryId) {
+      var idx = findEntryIndexById(launcherEntries, entryId);
+      var removedName = "";
 
       if (idx === -1) {
         setLauncherStatus("Entry not found.");
         return;
       }
+
+      removedName = launcherEntries[idx].name;
 
       if (!confirm("Delete launcher entry '" + removedName + "'?")) {
         return;
@@ -309,8 +453,29 @@
 
       launcherEntries.splice(idx, 1);
       renderLauncherEntries();
-      saveLauncherEntries();
+      saveAllEntries();
       setLauncherStatus("Deleted launcher entry: " + removedName);
+    }
+
+    function removeSnippetEntry(entryId) {
+      var idx = findEntryIndexById(snippetEntries, entryId);
+      var removedName = "";
+
+      if (idx === -1) {
+        setSnippetStatus("Snippet not found.");
+        return;
+      }
+
+      removedName = snippetEntries[idx].name;
+
+      if (!confirm("Delete snippet '" + removedName + "'?")) {
+        return;
+      }
+
+      snippetEntries.splice(idx, 1);
+      renderSnippetEntries();
+      saveAllEntries();
+      setSnippetStatus("Deleted snippet: " + removedName);
     }
 
     function renderLauncherEntries() {
@@ -342,7 +507,7 @@
 
         deleteBtn = document.createElement("button");
         deleteBtn.className = "delete-item danger";
-        deleteBtn.style.display = deleteMode ? "inline-block" : "none";
+        deleteBtn.style.display = launcherDeleteMode ? "inline-block" : "none";
         deleteBtn.innerText = "Delete";
         deleteBtn.title = "Delete this launcher entry";
         deleteBtn.onclick = (function(id) {
@@ -355,6 +520,78 @@
       }
 
       container.appendChild(fragment);
+    }
+
+    function renderSnippetEntries() {
+      var container = el("snippetButtons");
+      var fragment = document.createDocumentFragment();
+      var i;
+      var row;
+      var snippetBtn;
+      var deleteBtn;
+
+      container.innerHTML = "";
+
+      if (!snippetEntries.length) {
+        container.innerHTML = "<div>No snippets yet. Click Create to add one.</div>";
+        return;
+      }
+
+      for (i = 0; i < snippetEntries.length; i++) {
+        row = document.createElement("div");
+        row.className = "snippet-row";
+
+        snippetBtn = document.createElement("button");
+        snippetBtn.className = "snippet-item";
+        snippetBtn.innerText = snippetEntries[i].name;
+        snippetBtn.title = "Click to copy this snippet";
+        snippetBtn.onclick = (function(name, content) {
+          return function() { copySnippetContent(name, content); };
+        })(snippetEntries[i].name, snippetEntries[i].content);
+
+        deleteBtn = document.createElement("button");
+        deleteBtn.className = "delete-item danger";
+        deleteBtn.style.display = snippetDeleteMode ? "inline-block" : "none";
+        deleteBtn.innerText = "Delete";
+        deleteBtn.title = "Delete this snippet";
+        deleteBtn.onclick = (function(id) {
+          return function() { removeSnippetEntry(id); };
+        })(snippetEntries[i].id);
+
+        row.appendChild(snippetBtn);
+        row.appendChild(deleteBtn);
+        fragment.appendChild(row);
+      }
+
+      container.appendChild(fragment);
+    }
+
+    function copySnippetContent(name, content) {
+      try {
+        if (window.clipboardData && window.clipboardData.setData) {
+          window.clipboardData.setData("Text", content);
+          setSnippetStatus("Copied snippet: " + name);
+          return;
+        }
+
+        copyWithFallbackTextbox(content);
+        setSnippetStatus("Copied snippet: " + name);
+      } catch (e) {
+        setSnippetStatus("Could not copy snippet. " + e.message);
+      }
+    }
+
+    function copyWithFallbackTextbox(content) {
+      var temp = document.createElement("textarea");
+      temp.style.position = "fixed";
+      temp.style.left = "-2000px";
+      temp.style.top = "-2000px";
+      temp.value = content;
+      document.body.appendChild(temp);
+      temp.focus();
+      temp.select();
+      document.execCommand("copy");
+      document.body.removeChild(temp);
     }
 
     function launchPath(path) {
@@ -375,7 +612,7 @@
 
     function getDataFilePath() {
       var candidates = getDataFilePathCandidates();
-      return candidates.length ? candidates[0] : "launcher_entries.txt";
+      return candidates.length ? candidates[0] : "originplanet_data.opdb";
     }
 
     function getDataFilePathCandidates() {
@@ -408,7 +645,7 @@
         return;
       }
 
-      pushUnique(results, fso.BuildPath(folderPath, "launcher_entries.txt"));
+      pushUnique(results, fso.BuildPath(folderPath, "originplanet_data.opdb"));
     }
 
     function pushUnique(list, value) {
@@ -423,37 +660,35 @@
       list.push(value);
     }
 
-    function saveLauncherEntries() {
+    function saveAllEntries() {
       try {
         var fso = new ActiveXObject("Scripting.FileSystemObject");
         var dataPath = activeDataFilePath || getDataFilePath();
         var stream = fso.CreateTextFile(dataPath, true, false);
-        var i;
+        var serialized = serializeAllEntries();
+        var obfuscated = obfuscateData(serialized);
 
-        for (i = 0; i < launcherEntries.length; i++) {
-          stream.WriteLine(escapeValue(launcherEntries[i].name) + "|" + escapeValue(launcherEntries[i].folderPath));
-        }
-
+        stream.Write(obfuscated);
         stream.Close();
       } catch (e) {
-        setLauncherStatus("Could not save entries. " + e.message);
+        setAllStatuses("Could not save entries. " + e.message);
       }
     }
 
-    function loadLauncherEntries() {
+    function loadAllEntries() {
       try {
         var fso = new ActiveXObject("Scripting.FileSystemObject");
         var candidates = getDataFilePathCandidates();
         var dataPath = "";
         var stream;
-        var line;
-        var sep;
-        var name;
-        var folderPath;
+        var raw;
+        var decoded;
         var i;
 
         launcherEntries = [];
-        nextEntryId = 1;
+        nextLauncherEntryId = 1;
+        snippetEntries = [];
+        nextSnippetEntryId = 1;
 
         for (i = 0; i < candidates.length; i++) {
           if (fso.FileExists(candidates[i])) {
@@ -462,44 +697,254 @@
           }
         }
 
-        activeDataFilePath = dataPath || (candidates.length ? candidates[0] : "launcher_entries.txt");
+        activeDataFilePath = dataPath || (candidates.length ? candidates[0] : "originplanet_data.opdb");
 
         if (!dataPath) {
-          renderLauncherEntries();
+          renderAllEntryLists();
           return;
         }
 
         stream = fso.OpenTextFile(dataPath, 1, false, 0);
+        raw = stream.ReadAll();
+        stream.Close();
 
-        while (!stream.AtEndOfStream) {
-          line = stream.ReadLine();
-          sep = splitEscapedPair(line);
-          if (!sep) {
+        decoded = deobfuscateData(raw);
+        deserializeAllEntries(decoded);
+      } catch (e) {
+        setAllStatuses("Could not load entries. " + e.message);
+      }
+
+      renderAllEntryLists();
+    }
+
+    function serializeAllEntries() {
+      var lines = [];
+      var i;
+
+      for (i = 0; i < launcherEntries.length; i++) {
+        lines.push(
+          "L|" +
+          escapeValue(launcherEntries[i].name) +
+          "|" +
+          escapeValue(launcherEntries[i].folderPath)
+        );
+      }
+
+      for (i = 0; i < snippetEntries.length; i++) {
+        lines.push(
+          "S|" +
+          escapeValue(snippetEntries[i].name) +
+          "|" +
+          escapeValue(snippetEntries[i].content)
+        );
+      }
+
+      return lines.join("\n");
+    }
+
+    function deserializeAllEntries(serialized) {
+      var normalized = String(serialized || "").replace(/\r/g, "");
+      var lines = normalized.split("\n");
+      var parts;
+      var i;
+
+      launcherEntries = [];
+      nextLauncherEntryId = 1;
+      snippetEntries = [];
+      nextSnippetEntryId = 1;
+
+      for (i = 0; i < lines.length; i++) {
+        if (!lines[i]) {
+          continue;
+        }
+
+        parts = splitEscapedValues(lines[i], 3);
+        if (!parts) {
+          continue;
+        }
+
+        if (parts[0] === "L") {
+          launcherEntries.push({
+            id: nextLauncherEntryId++,
+            name: unescapeValue(parts[1]),
+            folderPath: unescapeValue(parts[2])
+          });
+        } else if (parts[0] === "S") {
+          snippetEntries.push({
+            id: nextSnippetEntryId++,
+            name: unescapeValue(parts[1]),
+            content: unescapeValue(parts[2])
+          });
+        }
+      }
+    }
+
+    function obfuscateData(plainText) {
+      var key = "OriginPlanetLocalKey";
+      var i;
+      var mixed;
+      var hex = "";
+      var code;
+
+      plainText = String(plainText || "");
+
+      for (i = 0; i < plainText.length; i++) {
+        mixed = plainText.charCodeAt(i) ^ key.charCodeAt(i % key.length) ^ ((i * 31) % 251);
+        code = mixed.toString(16).toUpperCase();
+        if (code.length < 2) {
+          code = "0" + code;
+        }
+        hex += code;
+      }
+
+      return "OPDB1:" + hex;
+    }
+
+    function deobfuscateData(rawValue) {
+      var key = "OriginPlanetLocalKey";
+      var prefix = "OPDB1:";
+      var payload = String(rawValue || "");
+      var i;
+      var chunk;
+      var mixed;
+      var out = "";
+
+      if (payload.indexOf(prefix) !== 0) {
+        return payload;
+      }
+
+      payload = payload.substring(prefix.length);
+
+      if (payload.length % 2 !== 0) {
+        return "";
+      }
+
+      for (i = 0; i < payload.length; i += 2) {
+        chunk = parseInt(payload.substr(i, 2), 16);
+        if (isNaN(chunk)) {
+          continue;
+        }
+
+        mixed = chunk ^ key.charCodeAt((i / 2) % key.length) ^ ((((i / 2) * 31) % 251));
+        out += String.fromCharCode(mixed);
+      }
+
+      return out;
+    }
+
+    function exportDataToTxt() {
+      var txtPath = trimValue(el("dataTxtPath").value);
+      var lines;
+      var stream;
+
+      if (!txtPath) {
+        setDataToolsStatus("Please provide a .txt path for export.");
+        return;
+      }
+
+      try {
+        lines = [];
+        lines.push("# OriginPlanet readable export");
+        lines.push("# This file is editable and importable.");
+        lines.push("# Keep .opdb files user-specific and avoid sharing/editing .opdb directly.");
+        lines.push("# Format: L|escapedName|escapedPath and S|escapedName|escapedContent");
+        lines.push(serializeAllEntries());
+
+        stream = new ActiveXObject("Scripting.FileSystemObject").CreateTextFile(txtPath, true, false);
+        stream.Write(lines.join("\r\n"));
+        stream.Close();
+
+        setDataToolsStatus("Exported " + (launcherEntries.length + snippetEntries.length) + " record" + ((launcherEntries.length + snippetEntries.length) === 1 ? "" : "s") + " to: " + txtPath);
+      } catch (e) {
+        setDataToolsStatus("Export failed. " + e.message);
+      }
+    }
+
+    function importDataFromTxt() {
+      var txtPath = trimValue(el("dataTxtPath").value);
+      var fso;
+      var stream;
+      var raw;
+      var normalized;
+      var lines;
+      var filtered;
+      var joined;
+      var i;
+
+      if (!txtPath) {
+        setDataToolsStatus("Please provide a .txt path for import.");
+        return;
+      }
+
+      try {
+        fso = new ActiveXObject("Scripting.FileSystemObject");
+
+        if (!fso.FileExists(txtPath)) {
+          setDataToolsStatus("Import file not found: " + txtPath);
+          return;
+        }
+
+        stream = fso.OpenTextFile(txtPath, 1, false, 0);
+        raw = stream.ReadAll();
+        stream.Close();
+
+        normalized = String(raw || "").replace(/\r/g, "");
+        lines = normalized.split("\n");
+        filtered = [];
+
+        for (i = 0; i < lines.length; i++) {
+          if (!lines[i]) {
             continue;
           }
 
-          name = unescapeValue(sep.left);
-          folderPath = unescapeValue(sep.right);
-
-          if (name && folderPath) {
-            launcherEntries.push({
-              id: nextEntryId++,
-              name: name,
-              folderPath: folderPath
-            });
+          if (lines[i].charAt(0) === "#") {
+            continue;
           }
+
+          filtered.push(lines[i]);
         }
 
-        stream.Close();
+        joined = filtered.join("\n");
+
+        if (!joined) {
+          setDataToolsStatus("Import file has no records (L|... or S|...).");
+          return;
+        }
+
+        deserializeAllEntries(joined);
+        renderAllEntryLists();
+        saveAllEntries();
+
+        setDataToolsStatus("Imported data from: " + txtPath + " (" + filtered.length + " record" + (filtered.length === 1 ? "" : "s") + ").");
       } catch (e) {
-        setLauncherStatus("Could not load entries. " + e.message);
+        setDataToolsStatus("Import failed. " + e.message);
+      }
+    }
+
+    function getDefaultTxtPath() {
+      var opdbPath = activeDataFilePath || getDataFilePath();
+
+      if (!opdbPath) {
+        return "originplanet_export.txt";
       }
 
-      renderLauncherEntries();
+      if (/\.opdb$/i.test(opdbPath)) {
+        return opdbPath.replace(/\.opdb$/i, ".txt");
+      }
+
+      return opdbPath + ".txt";
     }
 
     function setLauncherStatus(message) {
       el("launcherStatus").innerText = message;
+    }
+
+    function setSnippetStatus(message) {
+      el("snippetStatus").innerText = message;
+    }
+
+    function setDataToolsStatus(message) {
+      el("dataToolsStatus").innerText = message;
     }
 
     function trimValue(value) {
@@ -521,30 +966,41 @@
         .replace(/\\\\/g, "\\");
     }
 
-    function splitEscapedPair(value) {
-      var i;
+    function splitEscapedValues(value, expectedParts) {
+      var parts = [];
+      var current = "";
       var escaped = false;
+      var i;
 
       for (i = 0; i < value.length; i++) {
         if (escaped) {
+          current += value.charAt(i);
           escaped = false;
           continue;
         }
 
         if (value.charAt(i) === "\\") {
+          current += value.charAt(i);
           escaped = true;
           continue;
         }
 
         if (value.charAt(i) === "|") {
-          return {
-            left: value.substring(0, i),
-            right: value.substring(i + 1)
-          };
+          parts.push(current);
+          current = "";
+          continue;
         }
+
+        current += value.charAt(i);
       }
 
-      return null;
+      parts.push(current);
+
+      if (parts.length !== expectedParts) {
+        return null;
+      }
+
+      return parts;
     }
 
     function getPathFromPathname() {
@@ -593,22 +1049,13 @@
     }
 
     window.onload = function() {
-      updateDeleteToggleButton();
-      loadLauncherEntries();
+      updateLauncherDeleteToggleButton();
+      updateSnippetDeleteToggleButton();
+      loadAllEntries();
 
-      el("appName").onkeypress = function(evt) {
-        evt = evt || window.event;
-        if (evt.keyCode === 13) {
-          createLauncherButton();
-        }
-      };
-
-      el("folderPath").onkeypress = function(evt) {
-        evt = evt || window.event;
-        if (evt.keyCode === 13) {
-          createLauncherButton();
-        }
-      };
+      bindEnterToAction("appName", createLauncherButton);
+      bindEnterToAction("folderPath", createLauncherButton);
+      bindEnterToAction("snippetName", createSnippetButton);
     };
   </script>
 </head>
@@ -621,15 +1068,21 @@
       <button class="primary" onclick="sayHello()">Press me</button>
       <span id="msg"></span>
     </div>
-    <button class="primary" onclick="openLauncher()">Open App Launcher</button>
+    <div class="row">
+      <button class="primary" onclick="openLauncher()">Open App Launcher</button>
+      <button class="primary" onclick="openSnippetPanel()">Open Clipboard Snippets</button>
+      <button class="ghost" onclick="openDataToolsPanel()">Open Data Import / Export</button>
+    </div>
   </div>
 
   <div id="launcherPanel" class="panel">
     <div class="row">
       <span class="panel-title">App Launcher</span>
-      <button class="primary" onclick="showCreateDialog()">Create</button>
-      <button id="toggleDeleteButton" class="ghost" onclick="toggleDeleteMode()">Delete</button>
-      <button class="ghost" onclick="goHome()">Home</button>
+      <div class="launcher-header-actions">
+        <button class="primary" onclick="showCreateDialog()">Create</button>
+        <button id="toggleDeleteButton" class="ghost" onclick="toggleDeleteMode()">Delete</button>
+        <button class="ghost" onclick="goHome()">Home</button>
+      </div>
     </div>
 
     <div id="createDialog">
@@ -654,5 +1107,65 @@
     <div id="launcherButtons"></div>
     <div id="launcherStatus"></div>
   </div>
+
+  <div id="snippetPanel" class="panel">
+    <div class="row">
+      <span class="panel-title">Clipboard Snippets</span>
+      <div class="snippet-header-actions">
+        <button class="primary" onclick="showSnippetCreateDialog()">Create</button>
+        <button id="toggleSnippetDeleteButton" class="ghost" onclick="toggleSnippetDeleteMode()">Delete</button>
+        <button class="ghost" onclick="goHome()">Home</button>
+      </div>
+    </div>
+
+    <div id="snippetCreateDialog">
+      <div class="form-row">
+        <label for="snippetName">Snippet Name</label>
+        <input id="snippetName" type="text" placeholder="Example: Team Standup Update" />
+      </div>
+
+      <div class="form-row">
+        <label for="snippetContent">Snippet Content</label>
+        <textarea id="snippetContent" placeholder="Write the text you want copied when clicking this snippet button."></textarea>
+      </div>
+
+      <div id="snippetCreateError"></div>
+
+      <div class="row">
+        <button class="primary" onclick="createSnippetButton()">Confirm</button>
+        <button class="ghost" onclick="hideSnippetCreateDialog()">Cancel</button>
+      </div>
+    </div>
+
+    <div id="snippetButtons"></div>
+    <div id="snippetStatus"></div>
+  </div>
+
+  <div id="dataToolsPanel" class="panel">
+    <div class="row">
+      <span class="panel-title">Data Import / Export</span>
+      <div class="snippet-header-actions">
+        <button class="ghost" onclick="goHome()">Home</button>
+      </div>
+    </div>
+
+    <div class="info-note">
+      Note for future maintenance: <strong>the <code>.opdb</code> file is user-specific and should stay next to each user's app copy.</strong>
+      Do not share or manually edit <code>.opdb</code>; use export/import <code>.txt</code> for readable transfer.
+    </div>
+
+    <div class="form-row">
+      <label for="dataTxtPath">Readable TXT Path</label>
+      <input id="dataTxtPath" type="text" placeholder="Example: C:\\Users\\You\\Documents\\originplanet_export.txt" />
+    </div>
+
+    <div class="row">
+      <button class="primary" onclick="exportDataToTxt()">Export to TXT</button>
+      <button class="primary" onclick="importDataFromTxt()">Import from TXT</button>
+    </div>
+
+    <div id="dataToolsStatus"></div>
+  </div>
+
 </body>
 </html>

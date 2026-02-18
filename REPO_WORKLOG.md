@@ -427,3 +427,278 @@ If future optimization is needed, likely highest ROI next steps are:
 1. Add explicit path-candidate cache invalidation if runtime location can change dynamically.
 2. Introduce a small in-memory index for launcher entries if list size becomes large.
 3. Move inline JS into a separate `.js` file if HTA packaging constraints allow (improves maintainability/testing).
+
+## 2026-02-18 — Launcher header spacing + button auto-width polish
+
+### 1) Request interpreted
+
+User asked for two UI adjustments in the launcher area shown in screenshot feedback:
+
+1. Move the header action buttons (`Create`, `Delete`, `Home`) a bit to the right so the title/buttons don't look squeezed.
+2. Ensure button widths adapt to each button label text instead of looking overly fixed/squeezed.
+
+### 2) Changes made in `originplanet.hta`
+
+#### A) Global button sizing behavior
+
+Updated the shared `button` style to be explicitly content-sized:
+
+- `width: auto;`
+- `min-width: 0;`
+- `white-space: nowrap;`
+
+Why:
+
+- Keeps all button widths tied to text + padding.
+- Prevents inherited/fallback sizing behavior from forcing awkward widths.
+- Avoids multiline label wrapping that can make buttons look compressed.
+
+#### B) Launcher list item button sizing
+
+Updated `.launcher-item` (the dynamic app-entry launch buttons) from fixed-ish sizing to text-adaptive sizing:
+
+- Removed `min-width: 220px`
+- Added `width: auto`
+
+Why:
+
+- Lets each generated launcher button size naturally by label length.
+- Aligns with request that “other buttons” adapt to button text.
+
+#### C) Header button alignment/spacing
+
+Added a dedicated wrapper for launcher header actions:
+
+- New CSS class: `.launcher-header-actions`
+  - `display: inline-flex`
+  - `align-items: center`
+  - `gap: 8px`
+  - `margin-left: 12px`
+
+Updated launcher header markup so `Create/Delete/Home` buttons live in this wrapper, placed after the `App Launcher` title.
+
+Why:
+
+- Introduces clear horizontal offset from the title.
+- Makes top row read less cramped while preserving current structure and behavior.
+
+### 3) Validation notes
+
+- Performed source inspection after patch to confirm:
+  - new wrapper class exists and is used in launcher header markup,
+  - button sizing rules are present,
+  - `.launcher-item` fixed min-width has been removed.
+- This repository has no automated UI test harness for HTA rendering; visual validation should be done in HTA runtime.
+
+## 2026-02-18 — Obfuscated persistence + Clipboard Snippets app
+
+### 1) Request interpreted
+
+Follow-up request had two concrete implementation goals:
+
+1. Replace plain-text entry storage with a less directly readable data format.
+2. Add a second in-window app (parallel to App Launcher) for named text snippets where clicking a button copies its content to clipboard, with Create/Delete/Home controls similar to launcher flow.
+
+### 2) Persistence redesign (single obfuscated data file)
+
+#### A) File strategy
+
+- Replaced cleartext `launcher_entries.txt` style persistence with a single application data file:
+  - `originplanet_data.opdb`
+- Both app launch entries and clipboard snippet entries are saved in this file.
+
+#### B) Data model serialization
+
+- Introduced unified serialization format in-memory before writing:
+  - launcher rows serialized as: `L|escapedName|escapedPath`
+  - snippet rows serialized as: `S|escapedName|escapedContent`
+- Existing escaping rules are reused for separators/newlines/backslashes.
+
+#### C) Obfuscation layer
+
+- Added `obfuscateData(...)` and `deobfuscateData(...)`:
+  - payload prefixed with `OPDB1:`
+  - body stored as XOR-mixed hex stream using a local key + position-based variation
+- Intent:
+  - produce a file that is not human-readable at a glance in a text editor,
+  - maintain deterministic decode behavior without external dependencies.
+
+#### D) Compatibility behavior
+
+- Decoder falls back gracefully if prefix is missing (treats input as plain text), so older plain payloads don't instantly crash load path.
+
+### 3) New feature: Clipboard Snippets app
+
+#### A) Navigation/UI structure
+
+- Added a second launch button on home panel:
+  - `Open Clipboard Snippets`
+- Added new panel `snippetPanel` with title, header actions, and list area:
+  - `Create`
+  - `Delete`/`Done` toggle
+  - `Home`
+
+#### B) Create dialog and fields
+
+- Added `snippetCreateDialog` with:
+  - `snippetName` (input)
+  - `snippetContent` (textarea)
+  - `Confirm` / `Cancel`
+- Validation requires both name and content.
+
+#### C) Runtime behavior
+
+- Snippet buttons are generated dynamically like launcher rows.
+- Clicking a snippet button copies its associated text to clipboard.
+- Copy implementation:
+  - primary path: `window.clipboardData.setData("Text", content)` (HTA/IE-host friendly)
+  - fallback path: hidden textarea + `document.execCommand("copy")`
+- Deletion flow mirrors launcher delete mode with confirmation dialogs.
+
+### 4) Shared logic refactor notes
+
+- Replaced launcher-only save/load with shared functions:
+  - `saveAllEntries()`
+  - `loadAllEntries()`
+  - `serializeAllEntries()` / `deserializeAllEntries()`
+- Added separate state for launcher and snippet modules:
+  - entries arrays
+  - next-id counters
+  - delete-mode flags
+  - status outputs
+
+### 5) Validation notes
+
+- Source-level validation:
+  - checked that both panels render and use independent controls/status lines,
+  - verified save/load now routes through unified obfuscated persistence path,
+  - verified new clipboard-copy flow wiring.
+- Further runtime validation recommended in HTA host on Windows to verify clipboard behavior in target environment.
+
+## 2026-02-18 — Data ownership note + TXT import/export module
+
+### 1) Request interpreted
+
+Follow-up requirements were:
+
+1. Add an explicit note that `.opdb` is user-specific and should not be treated as a shared hand-edited file.
+2. Keep existing `.opdb` handling behavior unchanged (so app updates remain distributable while each colleague keeps their local `.opdb`).
+3. Add another module to export/import between `.opdb` and a human-readable `.txt` format.
+
+### 2) Scope and non-change guarantee
+
+I intentionally **did not alter** the underlying `.opdb` path/discovery/write mechanics (`getDataFilePathCandidates`, `getDataFilePath`, `saveAllEntries`, `loadAllEntries`).
+
+Result:
+
+- each user's `.opdb` still lives next to their app copy,
+- app updates can be distributed independently,
+- existing local data compatibility behavior remains intact.
+
+### 3) New module: Data Import / Export
+
+#### A) Navigation and panel
+
+- Added a home button: `Open Data Import / Export`.
+- Added new panel `dataToolsPanel` containing:
+  - a maintenance note about `.opdb` ownership/use,
+  - one path input for readable text file target/source,
+  - `Export to TXT` and `Import from TXT` actions,
+  - status line (`dataToolsStatus`).
+
+#### B) Export behavior
+
+- New function: `exportDataToTxt()`.
+- Output includes comment header lines plus typed records:
+  - `L|escapedName|escapedPath`
+  - `S|escapedName|escapedContent`
+- Export file is intentionally readable and editable.
+
+#### C) Import behavior
+
+- New function: `importDataFromTxt()`.
+- Reads selected `.txt`, ignores blank/comment lines (`#...`), parses typed record lines, then:
+  - rehydrates launcher/snippet in-memory state,
+  - re-renders both modules,
+  - persists imported state back into `.opdb` via existing save path.
+
+#### D) Default path helper
+
+- New helper: `getDefaultTxtPath()`:
+  - derives a nearby `.txt` path from active `.opdb` path where possible,
+  - falls back to `originplanet_export.txt`.
+
+### 4) Explicit user-specific note placement
+
+Added on-screen note in Data Import / Export panel:
+
+- `.opdb` is user-specific, should stay beside each user's app,
+- avoid sharing/manual editing of `.opdb`,
+- use export/import `.txt` for readable transfer.
+
+### 5) Validation notes
+
+- Verified new panel wiring and function references through source inspection.
+- Confirmed `.opdb` core file handling functions were left intact.
+- Recommended runtime HTA validation on Windows for final operational confirmation in target host.
+
+## 2026-02-18 — Optimization / cleanup pass before closing task
+
+### 1) Request interpreted
+
+Final request was to do a broad optimization/general-improvement sweep before closing the task.
+
+### 2) Optimization focus areas (without changing product behavior)
+
+I targeted low-risk maintainability and robustness improvements while preserving established UX and `.opdb` behavior.
+
+#### A) Panel navigation de-duplication
+
+- Added `showOnlyPanel(panelId)` with centralized `panelIds` list.
+- Replaced repeated multi-line `setVisible(...)` sequences in:
+  - `openLauncher()`
+  - `openSnippetPanel()`
+  - `openDataToolsPanel()`
+  - `goHome()`
+
+Impact:
+
+- less duplicated UI-state code,
+- reduced chance of future panel-state drift bugs.
+
+#### B) Shared utility helpers for repeated logic
+
+- Added `findEntryIndexById(entries, entryId)` and reused it in both delete handlers.
+- Added `bindEnterToAction(inputId, action)` to unify Enter-key wiring in `window.onload`.
+- Added `renderAllEntryLists()` for two-panel re-render operations.
+- Added `setAllStatuses(message)` for shared persistence error messaging.
+
+Impact:
+
+- shorter, easier-to-audit functions,
+- fewer repeated loops/boilerplate blocks.
+
+#### C) Import/export robustness improvements
+
+- `importDataFromTxt()` now rejects imports with zero parsed records instead of silently overwriting with empty state.
+- Export/import status messages now include record counts for clearer operator feedback.
+
+Impact:
+
+- safer data operations,
+- clearer maintenance diagnostics.
+
+### 3) Behavioral compatibility note
+
+- No changes were made to `.opdb` path discovery or persistence architecture:
+  - `getDataFilePathCandidates`
+  - `getDataFilePath`
+  - `saveAllEntries`
+  - `loadAllEntries`
+
+So per-user local `.opdb` behavior remains as designed.
+
+### 4) Validation notes
+
+- Ran patch sanity and source checks after refactor.
+- Captured updated UI screenshot for the Data Import / Export module to confirm navigational wiring still works.
