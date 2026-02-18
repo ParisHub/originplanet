@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Local Worker Bridge</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell" aria-label="Local worker bridge application">
+      <header class="hero">
+        <p class="eyebrow">Local Automation Bridge</p>
+        <h1>Future-ready UI for Windows local tasks</h1>
+        <p class="subtitle">
+          This lightweight frontend previews jobs and sends structured commands to a companion
+          HTA worker when you are ready to wire in real local automation.
+        </p>
+      </header>
+
+      <section class="panel grid" aria-label="Job composer">
+        <div class="card">
+          <h2>1) Define task</h2>
+          <label for="taskType">Task type</label>
+          <select id="taskType">
+            <option value="open-path">Open local path</option>
+            <option value="run-command">Run command</option>
+            <option value="show-toast">Show message</option>
+          </select>
+
+          <label for="taskPayload">Payload / argument</label>
+          <input
+            id="taskPayload"
+            type="text"
+            placeholder="Example: C:\\Users\\you\\Documents"
+            autocomplete="off"
+          />
+
+          <label for="taskPriority">Priority</label>
+          <input id="taskPriority" type="range" min="1" max="5" value="3" />
+
+          <button id="previewBtn" class="btn primary">Preview request</button>
+        </div>
+
+        <div class="card">
+          <h2>2) Dispatch</h2>
+          <p>
+            In production this will call into the HTA backend. Right now it serializes the JSON
+            message and simulates a backend acknowledgment.
+          </p>
+          <pre id="requestPreview" class="preview" aria-live="polite"></pre>
+          <div class="actions">
+            <button id="sendBtn" class="btn success">Send to HTA worker</button>
+            <button id="clearBtn" class="btn ghost">Clear</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel card" aria-label="Activity log">
+        <h2>Activity</h2>
+        <ul id="activityLog" class="activity-log"></ul>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

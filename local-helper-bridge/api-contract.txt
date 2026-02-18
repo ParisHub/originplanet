@@ -1,0 +1,60 @@
+Local Helper Bridge API Contract
+================================
+
+Purpose
+-------
+Defines the current lightweight contract between:
+1) Frontend app (`index.html` + `app.js`)
+2) Local Windows worker (`local-worker.hta`)
+
+Transport Options (future)
+--------------------------
+- Window external call bridge
+- Local file drop/poll (JSON files)
+- Named pipe/localhost bridge via small local executable
+
+Current Envelope
+----------------
+The frontend prepares this JSON request envelope:
+
+{
+  "version": "1.0",
+  "source": "local-helper-bridge-ui",
+  "timestamp": "2026-01-01T12:00:00.000Z",
+  "task": {
+    "type": "open-path | run-command | show-toast",
+    "payload": "string",
+    "priority": 1..5
+  }
+}
+
+Validation Rules (frontend)
+---------------------------
+- payload: required
+- payload length: <= 260 chars (safe early limit for Windows path/command ergonomics)
+
+Expected HTA Response
+---------------------
+{
+  "accepted": true,
+  "status": "queued | running | complete | failed",
+  "requestId": "hex-string",
+  "error": "optional error text"
+}
+
+Task Semantics (planned)
+------------------------
+- open-path: open file/folder in Explorer
+- run-command: execute trusted command with controlled allowlist
+- show-toast: local message to user
+
+Security Notes
+--------------
+- Never execute untrusted payload directly.
+- Add allowlist + argument sanitization before enabling run-command.
+- Consider explicit confirmation UI for destructive actions.
+
+Versioning
+----------
+- `version` in request is mandatory.
+- Breaking change => increment major version and keep compatibility adapter in HTA.

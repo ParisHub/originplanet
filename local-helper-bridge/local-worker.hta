@@ -1,0 +1,88 @@
+<html>
+  <head>
+    <title>Local Worker (Prototype)</title>
+    <HTA:APPLICATION
+      ID="LocalWorker"
+      APPLICATIONNAME="LocalWorker"
+      BORDER="thin"
+      SCROLL="no"
+      SINGLEINSTANCE="yes"
+      SYSMENU="yes"
+      WINDOWSTATE="normal"
+    />
+    <script language="javascript">
+      function appendLog(text) {
+        var log = document.getElementById('log');
+        var line = document.createElement('div');
+        line.innerText = '[' + new Date().toLocaleTimeString() + '] ' + text;
+        log.appendChild(line);
+      }
+
+      function executeRequest(rawJson) {
+        try {
+          var request = JSON.parse(rawJson);
+          appendLog('Received task type: ' + request.task.type);
+          appendLog('Payload: ' + request.task.payload);
+
+          // Future local automation hooks:
+          // - WScript.Shell.Run(command)
+          // - FileSystemObject operations
+          // - Trusted local app orchestration
+
+          return JSON.stringify({
+            accepted: true,
+            status: 'queued',
+            requestId: Math.random().toString(16).slice(2)
+          });
+        } catch (error) {
+          appendLog('Failed to parse request: ' + error.message);
+          return JSON.stringify({ accepted: false, error: error.message });
+        }
+      }
+
+      function runDemo() {
+        var sample = '{"version":"1.0","task":{"type":"show-toast","payload":"hello from ui","priority":3}}';
+        var result = executeRequest(sample);
+        appendLog('Response: ' + result);
+      }
+    </script>
+    <style>
+      body {
+        font-family: Segoe UI, Arial, sans-serif;
+        margin: 0;
+        background: #0f152d;
+        color: #ecf1ff;
+      }
+
+      .frame {
+        padding: 16px;
+      }
+
+      #log {
+        margin-top: 12px;
+        border: 1px solid #4b5fa3;
+        background: #0a1024;
+        padding: 10px;
+        min-height: 150px;
+        font-family: Consolas, monospace;
+      }
+
+      button {
+        background: #7f8cff;
+        color: #ffffff;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="frame">
+      <h3>Local Worker (HTA)</h3>
+      <p>This is the local backend placeholder for future Windows automation tasks.</p>
+      <button onclick="runDemo()">Run demo request</button>
+      <div id="log"></div>
+    </div>
+  </body>
+</html>
