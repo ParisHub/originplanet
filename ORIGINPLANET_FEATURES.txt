@@ -1,9 +1,5 @@
 OriginPlanet HTA - Quick Feature Summary
 
-- Dashboard home with quick navigation and record counters.
 - Path Opener panel to save named paths and open them quickly.
 - Pasting Snippets panel to save reusable text and copy it to clipboard.
-- Data Import / Export panel to export/import readable TXT data.
-- Local persistent storage for entries between launches.
-- Startup window configuration via originplanet_config.txt.
-- C Hub demo button that runs `originplanet_c_hub.exe --eval 2+3` and shows the result.
+- Local persistent storage for entries between launches in a txt.

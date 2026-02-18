@@ -1,7 +1,0 @@
-create a completely cross platform performance hub in c that only uses default c to be used across different operating systems when compiled for those
-
-	meaning, some python or html+scripting is able to interface with that through a defined api for local performance computing needs
-
-create a windows app, that ready a .txt config file, where I can set the default options of how the app should look like, like window width, height, positioning after being started, with the top window bar or without it
-
-create a button on this, that just calls the c performance hub to calculate "2+3" and returns the value to the windows app and outputs the result next to the button
