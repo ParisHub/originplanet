@@ -1,72 +1,27 @@
-Local Helper Bridge API Contract
-================================
+Local Helper Bridge Contract (Current)
+======================================
 
 Purpose
 -------
-Defines the current lightweight contract between:
-1) Frontend app (`index.html` + `app.js`)
-2) Local Windows worker (`local-worker.hta`)
+A minimal bridge with two pieces:
+1) `index.html` frontend with one button.
+2) `local-worker.hta` backend helper.
 
-Current execution mode
-----------------------
-Primary mode is direct HTA launch with an encoded request in query string:
-
-mshta.exe "<absolute_path_to_local-worker.hta>?request=<urlencoded-json>"
-
-If launch is unavailable (for example, browser blocks ActiveXObject),
-frontend falls back to a local simulated response only for development visibility.
-
-Current Envelope
+Current behavior
 ----------------
-The frontend prepares this JSON request envelope:
+- User clicks one button in `index.html`.
+- Frontend launches `local-worker.hta` via:
+  mshta.exe "<absolute-path-to-local-worker.hta>"
+- On load, HTA executes:
+  explorer.exe C:\
+- Result: Windows File Explorer opens to C:\ on Windows 11.
 
-{
-  "version": "1.0",
-  "source": "local-helper-bridge-ui",
-  "timestamp": "2026-01-01T12:00:00.000Z",
-  "task": {
-    "type": "open-path | run-command | show-toast",
-    "payload": "string",
-    "priority": 1..5
-  }
-}
-
-Validation Rules (frontend)
----------------------------
-- payload: required
-- payload length: <= 260 chars (safe early limit for Windows path/command ergonomics)
-
-Startup behavior (HTA)
-----------------------
-- On load, HTA reads query parameter `request`.
-- If present, HTA parses request and updates in-window status text.
-- If absent, HTA remains in running state text only.
-- HTA is intentionally passive (no buttons, no manual interaction expected).
-
-Runtime status behavior (HTA)
------------------------------
-- Base status text: `.hta helper is running`
-- With request: shows `.hta helper is running` plus `last task: <taskType>`
-- If parse warning occurs: shows warning text in status region
-
-Compatibility note
+No simulation mode
 ------------------
-- HTA parser supports both `window.JSON.parse` (when available) and legacy JScript fallback parser.
-- This avoids `JSON is undefined` failures in older HTA engines.
+- There is no simulated backend behavior in this version.
+- If launch fails, frontend only shows a status message.
 
-Task Semantics (planned)
-------------------------
-- open-path: planned (open file/folder in Explorer)
-- run-command: planned (execute trusted command with controlled allowlist)
-- show-toast: planned (local non-blocking message behavior)
-
-Security Notes
---------------
-- Never execute untrusted payload directly.
-- Add allowlist + argument sanitization before enabling run-command.
-- Consider explicit confirmation UI for destructive actions.
-
-Versioning
-----------
-- `version` in request is mandatory.
-- Breaking change => increment major version and keep compatibility adapter in HTA.
+Runtime requirement
+-------------------
+- Frontend should be opened from local filesystem (`file:///.../index.html`).
+- Environment must allow ActiveX access (`WScript.Shell`) for launch.

@@ -1,6 +1,6 @@
 <html>
   <head>
-    <title>Local Worker Helper</title>
+    <title>HTA Helper</title>
     <HTA:APPLICATION
       ID="LocalWorker"
       APPLICATIONNAME="LocalWorker"
@@ -12,67 +12,14 @@
       SHOWINTASKBAR="yes"
     />
     <script language="javascript">
-      function parseJsonCompat(rawText) {
-        if (!rawText) {
-          return null;
-        }
-
-        if (window.JSON && typeof window.JSON.parse === 'function') {
-          return window.JSON.parse(rawText);
-        }
-
-        return new Function('return (' + rawText + ');')();
-      }
-
-      function getQueryValue(name) {
-        var query = window.location.search || '';
-
-        if (!query || query.length < 2) {
-          return null;
-        }
-
-        var parts = query.substring(1).split('&');
-
-        for (var i = 0; i < parts.length; i += 1) {
-          var tuple = parts[i].split('=');
-          if (tuple[0] === name) {
-            return decodeURIComponent(tuple.slice(1).join('='));
-          }
-        }
-
-        return null;
-      }
-
-      function updateStatus(text) {
-        document.getElementById('status').innerText = text;
-      }
-
-      function executeRequest(rawRequestText) {
+      function openCDrive() {
         try {
-          var request = parseJsonCompat(rawRequestText);
-
-          if (!request || !request.task) {
-            updateStatus('.hta helper is running');
-            return;
-          }
-
-          var taskType = request.task.type || 'unknown-task';
-          updateStatus('.hta helper is running\nlast task: ' + taskType);
+          var shell = new ActiveXObject('WScript.Shell');
+          shell.Run('explorer.exe C:\\', 1, false);
+          document.getElementById('status').innerText = '.hta helper is running\nOpened C:\\ in Explorer';
         } catch (error) {
-          updateStatus('.hta helper is running\nrequest parse warning: ' + error.message);
+          document.getElementById('status').innerText = '.hta helper error\n' + error.message;
         }
-      }
-
-      function processStartupRequest() {
-        updateStatus('.hta helper is running');
-
-        var encodedRequest = getQueryValue('request');
-
-        if (!encodedRequest) {
-          return;
-        }
-
-        executeRequest(encodedRequest);
       }
     </script>
     <style>
@@ -87,25 +34,23 @@
 
       .frame {
         height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        display: grid;
+        place-items: center;
         text-align: center;
-        padding: 16px;
+        padding: 14px;
         color: #ffffff;
         background: linear-gradient(160deg, #2d66d9 0%, #1a48a9 100%);
       }
 
       .status {
-        font-size: 20px;
-        font-weight: 600;
-        line-height: 1.4;
         white-space: pre-line;
-        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+        font-size: 18px;
+        font-weight: 600;
+        line-height: 1.45;
       }
     </style>
   </head>
-  <body onload="processStartupRequest()">
+  <body onload="openCDrive()">
     <div class="frame">
       <div id="status" class="status">.hta helper is running</div>
     </div>
