@@ -2,10 +2,12 @@
 
 the first of its kind
 
-## Repository status notes
+## Current repository layout
 
-- The previous `typing_speed_increaser.py` utility has been removed during cleanup.
-- Legacy experiments were grouped into `bad programs/` for clearer top-level organization.
+- `originplanet.hta` — primary HTA application entry point.
+- `docs/` — reference notes and source data files (`.md`, `.txt`, `.csv`).
+- `bad programs/` — archived experimental code kept out of the main app path.
+- `REPO_WORKLOG.md` — chronological implementation and maintenance log.
 
 ## Windows mini app plan (documented)
 
