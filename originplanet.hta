@@ -359,6 +359,8 @@
     var APP = {
       panels: ["homePanel", "launcherPanel", "snippetPanel", "dataToolsPanel"],
       dataFileName: "originplanet_data.opdb",
+      configFileName: "originplanet_config.txt",
+      cHubExecutableName: "originplanet_c_hub.exe",
       obfuscationKey: "OriginPlanetLocalKey",
       obfuscationPrefix: "OPDB1:",
       states: {
@@ -387,6 +389,16 @@
 
     var activeDataFilePath = "";
     var pathCandidatesCache = null;
+    var windowConfigState = {
+      width: 1100,
+      height: 760,
+      left: null,
+      top: null,
+      caption: "yes",
+      border: "thick",
+      state: "normal",
+      parseWarnings: []
+    };
 
     function el(id) {
       return document.getElementById(id);
@@ -431,14 +443,16 @@
     }
 
     function setInitialWindowSize() {
-      var targetWidth = 1100;
-      var targetHeight = 760;
+      var targetWidth = toSafeInt(windowConfigState.width, 1100);
+      var targetHeight = toSafeInt(windowConfigState.height, 760);
       var maxWidth = screen && screen.availWidth ? screen.availWidth : 1600;
       var maxHeight = screen && screen.availHeight ? screen.availHeight : 1200;
       var rightMargin = 80;
       var bottomMargin = 80;
       var centeredX = 0;
       var centeredY = 0;
+      var targetLeft = windowConfigState.left;
+      var targetTop = windowConfigState.top;
 
       if (!window.resizeTo) {
         return;
@@ -462,10 +476,197 @@
 
       window.resizeTo(targetWidth, targetHeight);
 
-      if (window.moveTo) {
+      if (!window.moveTo) {
+        return;
+      }
+
+      if (targetLeft === null || targetTop === null) {
         centeredX = Math.max(0, Math.floor((maxWidth - targetWidth) / 2));
         centeredY = Math.max(0, Math.floor((maxHeight - targetHeight) / 2));
         window.moveTo(centeredX, centeredY);
+        return;
+      }
+
+      targetLeft = clampValue(toSafeInt(targetLeft, 0), 0, Math.max(0, maxWidth - targetWidth));
+      targetTop = clampValue(toSafeInt(targetTop, 0), 0, Math.max(0, maxHeight - targetHeight));
+      window.moveTo(targetLeft, targetTop);
+    }
+
+    function clampValue(value, minValue, maxValue) {
+      if (value < minValue) {
+        return minValue;
+      }
+
+      if (value > maxValue) {
+        return maxValue;
+      }
+
+      return value;
+    }
+
+    function toSafeInt(value, fallback) {
+      var parsed = parseInt(value, 10);
+      if (isNaN(parsed)) {
+        return fallback;
+      }
+      return parsed;
+    }
+
+    function getConfigFilePath() {
+      var currentFilePath = getCurrentFilePath();
+
+      if (!currentFilePath) {
+        return APP.configFileName;
+      }
+
+      return currentFilePath.replace(/[^\\]+$/, APP.configFileName);
+    }
+
+    function parseConfigValue(value) {
+      var normalized = trimValue(String(value || "")).toLowerCase();
+      return normalized;
+    }
+
+    function loadWindowConfig() {
+      var configPath = getConfigFilePath();
+      var fso;
+      var stream;
+      var raw;
+      var lines;
+      var i;
+      var line;
+      var sep;
+      var key;
+      var value;
+      var normalized;
+
+      windowConfigState.parseWarnings = [];
+
+      try {
+        fso = new ActiveXObject("Scripting.FileSystemObject");
+
+        if (!fso.FileExists(configPath)) {
+          return;
+        }
+
+        stream = fso.OpenTextFile(configPath, 1, false, 0);
+        raw = stream.ReadAll();
+        stream.Close();
+
+        lines = String(raw || "").replace(/\r/g, "").split("\n");
+
+        for (i = 0; i < lines.length; i++) {
+          line = trimValue(lines[i]);
+
+          if (!line || line.charAt(0) === "#" || line.charAt(0) === ";") {
+            continue;
+          }
+
+          sep = line.indexOf("=");
+          if (sep === -1) {
+            windowConfigState.parseWarnings.push("Ignored malformed line " + (i + 1) + ": " + line);
+            continue;
+          }
+
+          key = trimValue(line.substring(0, sep)).toLowerCase();
+          value = trimValue(line.substring(sep + 1));
+          normalized = parseConfigValue(value);
+
+          if (key === "window.width") {
+            windowConfigState.width = toSafeInt(value, windowConfigState.width);
+          } else if (key === "window.height") {
+            windowConfigState.height = toSafeInt(value, windowConfigState.height);
+          } else if (key === "window.left") {
+            windowConfigState.left = toSafeInt(value, 0);
+          } else if (key === "window.top") {
+            windowConfigState.top = toSafeInt(value, 0);
+          } else if (key === "window.caption") {
+            windowConfigState.caption = normalized;
+          } else if (key === "window.border") {
+            windowConfigState.border = normalized;
+          } else if (key === "window.state") {
+            windowConfigState.state = normalized;
+          } else {
+            windowConfigState.parseWarnings.push("Unknown config key '" + key + "' on line " + (i + 1) + ".");
+          }
+        }
+      } catch (e) {
+        windowConfigState.parseWarnings.push("Config read failed: " + e.message);
+      }
+    }
+
+    function showWindowConfigStatus() {
+      var note = [];
+
+      if (windowConfigState.caption !== "yes" || (windowConfigState.border !== "thick" && windowConfigState.border !== "thin")) {
+        note.push("Caption/border are HTA compile-time settings; runtime override is limited.");
+      }
+
+      if (windowConfigState.state === "maximized" && window.moveTo && window.resizeTo) {
+        try {
+          window.moveTo(0, 0);
+          window.resizeTo(screen.availWidth, screen.availHeight);
+        } catch (e) {
+          note.push("Could not maximize window: " + e.message);
+        }
+      }
+
+      if (windowConfigState.parseWarnings.length) {
+        note.push(windowConfigState.parseWarnings.join(" "));
+      }
+
+      if (note.length && el("configStatus")) {
+        el("configStatus").innerText = "Config notes: " + note.join(" ");
+      }
+    }
+
+    function getHubExecutablePath() {
+      var currentFilePath = getCurrentFilePath();
+
+      if (!currentFilePath) {
+        return APP.cHubExecutableName;
+      }
+
+      return currentFilePath.replace(/[^\\]+$/, APP.cHubExecutableName);
+    }
+
+    function runHubTwoPlusThree() {
+      var resultNode = el("computeResultValue");
+      var exePath = getHubExecutablePath();
+      var shell;
+      var exec;
+      var command;
+      var output;
+
+      if (resultNode) {
+        resultNode.innerText = "Running...";
+      }
+
+      try {
+        shell = new ActiveXObject("WScript.Shell");
+        command = 'cmd /c ""' + exePath + '" --eval 2+3"';
+        exec = shell.Exec(command);
+
+        while (exec.Status === 0) {
+          // HTA/JScript busy wait while process completes.
+        }
+
+        output = trimValue(exec.StdOut.ReadAll());
+
+        if (exec.ExitCode !== 0) {
+          if (resultNode) {
+            resultNode.innerText = "Hub error (code " + exec.ExitCode + "): " + trimValue(exec.StdErr.ReadAll());
+          }
+          return;
+        }
+
+        if (resultNode) {
+          resultNode.innerText = output || "(no output)";
+        }
+      } catch (e) {
+        if (resultNode) {
+          resultNode.innerText = "Hub unavailable: " + e.message + " (expected exe: " + exePath + ")";
+        }
       }
     }
 
@@ -1238,9 +1439,11 @@
     window.onload = function() {
       updateDeleteToggleButton("launcher");
       updateDeleteToggleButton("snippet");
+      loadWindowConfig();
       loadAllEntries();
       updateHomeStats();
       setInitialWindowSize();
+      showWindowConfigStatus();
       showOnlyPanel("homePanel");
       setActiveSection("Home");
       updateListViewportMaxHeight();
@@ -1299,6 +1502,15 @@
             <button class="primary" onclick="openSnippetPanel()">Open Pasting Snippets</button>
             <button class="ghost" onclick="openDataToolsPanel()">Open Data Tools</button>
           </div>
+        </div>
+
+        <div class="quick-actions">
+          <div class="quick-actions-title">Compute Hub demo</div>
+          <div class="row">
+            <button class="primary" onclick="runHubTwoPlusThree()">Run 2+3 via C Hub</button>
+            <span id="computeResultValue">Result will appear here.</span>
+          </div>
+          <div id="configStatus" class="subtitle"></div>
         </div>
 
         <div class="info-note">Use the left navigation to move between sections. The dashboard now provides at-a-glance counts so you can tell if data loaded as expected.</div>
