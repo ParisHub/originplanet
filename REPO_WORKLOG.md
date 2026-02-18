@@ -960,3 +960,55 @@ Requested UI cleanup after previous resize passes:
 
 - If we later add a shared app chrome across all panels, re-introduce it as a dedicated layout shell instead of home-specific content.
 - If introducing a new home CTA, keep it functional (or omit entirely) to avoid dead/demo interactions.
+
+## 2026-02-18 — Remove post-load auto-resize and make panels fill vertical space
+
+### 1) User feedback addressed
+
+Two issues were called out:
+
+1. Too much empty space at the bottom of the window in extension views.
+2. Auto-resizing after startup was annoying; desired behavior is one reasonable startup size only.
+
+### 2) Implementation changes in `originplanet.hta`
+
+#### A) One-time startup sizing only
+
+- Removed ongoing auto-resize behavior and helper chain from normal interactions.
+- Added `setInitialWindowSize()` with fixed startup target size:
+  - width: `1100`
+  - height: `760`
+  - clamped to `screen.availWidth/availHeight`
+- Called `setInitialWindowSize()` only once during `window.onload`.
+- Kept manual user resizing enabled via HTA settings from earlier passes.
+
+Result:
+- App opens at a practical default size.
+- No further automatic resizing while user navigates panels or edits content.
+
+#### B) Filled vertical layout to avoid bottom dead space
+
+- Updated layout to occupy full viewport height:
+  - Added `html, body { height: 100%; }`
+  - Set `body` to `height: 100vh`, `overflow: hidden`, and tighter padding.
+  - Converted `.panel` to full-height flex column container.
+- Updated panel visibility toggling to use `display: flex` for shown panels.
+- Updated extension list containers (`#launcherButtons`, `#snippetButtons`) to flex-grow and consume remaining vertical space.
+
+Result:
+- Active panel now fills the window interior.
+- Button list region expands to use available height; when needed, it scrolls instead of leaving the old large bottom void.
+
+### 3) Validation performed
+
+- Source inspection for removal of old post-load auto-resize hooks.
+- Source inspection for one-time startup sizing call in `window.onload`.
+- Source inspection for full-height/flex layout wiring for panel + list containers.
+- Ran `git diff --check` for patch hygiene.
+- Attempted screenshot capture via browser tooling; local app URL remains unreachable from that environment in this session.
+
+### 4) Maintenance notes for future me
+
+- If startup size should adapt by display class (e.g., small laptop vs ultrawide), make `1100x760` configurable constants.
+- If `100vh` behaves inconsistently in a specific HTA host/version, fallback to `height: 100%` only with explicit parent sizing.
+- If future panel content needs independent sections to stretch, keep using flex layout with `min-height: 0` on scrollable children.

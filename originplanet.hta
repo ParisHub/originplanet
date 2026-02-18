@@ -16,12 +16,20 @@
     WINDOWSTATE="normal"
   />
   <style>
+    html,
+    body {
+      height: 100%;
+    }
+
     body {
       font-family: Segoe UI, Tahoma, sans-serif;
       margin: 0;
-      padding: 28px;
+      padding: 18px;
       background: linear-gradient(160deg, #f1f6ff 0%, #eaf0ff 45%, #f7efff 100%);
       color: #1c2435;
+      box-sizing: border-box;
+      height: 100vh;
+      overflow: hidden;
     }
 
     h3 {
@@ -53,6 +61,11 @@
       padding: 18px;
       box-shadow: 0 10px 30px rgba(39, 61, 120, 0.12);
       backdrop-filter: blur(2px);
+      box-sizing: border-box;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
     }
 
     button {
@@ -98,7 +111,6 @@
     #snippetPanel,
     #dataToolsPanel {
       display: none;
-      margin-top: 14px;
     }
 
     #launcherButtons,
@@ -110,6 +122,8 @@
       overflow-y: auto;
       overflow-x: hidden;
       padding-right: 4px;
+      flex: 1 1 auto;
+      min-height: 0;
     }
 
     .launcher-row,
@@ -244,7 +258,7 @@
     }
 
     function setVisible(id, isVisible) {
-      el(id).style.display = isVisible ? "block" : "none";
+      el(id).style.display = isVisible ? "flex" : "none";
     }
 
     function showOnlyPanel(panelId) {
@@ -254,57 +268,27 @@
         setVisible(panelIds[i], panelIds[i] === panelId);
       }
 
-      syncWindowToContent();
     }
 
-    function syncWindowToContent() {
-      var body = document.body;
-      var targetWidth;
-      var targetHeight;
-      var minWidth = 700;
-      var minHeight = 480;
+    function setInitialWindowSize() {
+      var targetWidth = 1100;
+      var targetHeight = 760;
       var maxWidth = screen && screen.availWidth ? screen.availWidth : 1600;
       var maxHeight = screen && screen.availHeight ? screen.availHeight : 1200;
 
-      if (!body || !window.resizeTo) {
-        updateScrollableListHeights();
+      if (!window.resizeTo) {
         return;
       }
 
-      targetWidth = body.scrollWidth + 70;
-      targetHeight = window.outerHeight || body.scrollHeight + 120;
-
-      if (targetWidth < minWidth) {
-        targetWidth = minWidth;
-      }
-      if (targetHeight < minHeight) {
-        targetHeight = minHeight;
-      }
       if (targetWidth > maxWidth) {
         targetWidth = maxWidth;
       }
+
       if (targetHeight > maxHeight) {
         targetHeight = maxHeight;
       }
 
       window.resizeTo(targetWidth, targetHeight);
-      updateScrollableListHeights();
-    }
-
-    function updateScrollableListHeights() {
-      var launcherList = el("launcherButtons");
-      var snippetList = el("snippetButtons");
-      var minimumHeight = 140;
-      var availableHeight = (document.documentElement && document.documentElement.clientHeight ? document.documentElement.clientHeight : 760) - 260;
-      var targetListHeight = availableHeight > minimumHeight ? availableHeight : minimumHeight;
-
-      if (launcherList) {
-        launcherList.style.maxHeight = targetListHeight + "px";
-      }
-
-      if (snippetList) {
-        snippetList.style.maxHeight = targetListHeight + "px";
-      }
     }
 
     function setAllStatuses(message) {
@@ -1090,11 +1074,7 @@
       updateLauncherDeleteToggleButton();
       updateSnippetDeleteToggleButton();
       loadAllEntries();
-      syncWindowToContent();
-
-      window.onresize = function() {
-        updateScrollableListHeights();
-      };
+      setInitialWindowSize();
 
       bindEnterToAction("appName", createLauncherButton);
       bindEnterToAction("folderPath", createLauncherButton);
