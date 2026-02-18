@@ -923,3 +923,40 @@ Why this helps:
 - If product intent later requires auto-height growth again, reintroduce it behind a feature flag and disable it while user is actively resizing.
 - If panel header/content structure changes significantly, revisit the `availableHeight - 260` offset in `updateScrollableListHeights()`.
 - If UI must support very tiny windows, lower the list `minimumHeight` from `140` after usability test.
+
+## 2026-02-18 — Home-only headline + remove legacy home button
+
+### 1) User feedback addressed
+
+Requested UI cleanup after previous resize passes:
+
+1. Remove the `Press me` button from Home.
+2. Show the app headline/headbar only in Home, not inside extension panels.
+
+### 2) Implementation changes
+
+#### A) Removed legacy Home interaction row
+
+- Deleted the Home row containing:
+  - `Press me` button
+  - `msg` status pill
+- Removed now-unused `sayHello()` function.
+- Removed now-unused `#msg` style block.
+
+#### B) Scoped headline/subtitle to Home panel only
+
+- Moved top-level headline content into `#homePanel`:
+  - `<h3>OriginPlanet Launcher</h3>`
+  - subtitle paragraph
+- This ensures extension views (`Path Opener`, `Pasting`, `Data Import / Export`) no longer render the home headline area.
+
+### 3) Validation performed
+
+- Source inspection to ensure headline appears only inside `#homePanel` markup.
+- Source inspection to ensure no remaining `sayHello()` references.
+- Ran `git diff --check` for patch hygiene.
+
+### 4) Maintenance notes for future me
+
+- If we later add a shared app chrome across all panels, re-introduce it as a dedicated layout shell instead of home-specific content.
+- If introducing a new home CTA, keep it functional (or omit entirely) to avoid dead/demo interactions.

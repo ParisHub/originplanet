@@ -94,20 +94,6 @@
       color: #7c1129;
     }
 
-    #msg {
-      min-width: 120px;
-      font-size: 14px;
-      color: #0f7a3f;
-      font-weight: 700;
-      background: #e9fff3;
-      border: 1px solid #b7ebcc;
-      border-radius: 999px;
-      padding: 4px 10px;
-      min-height: 18px;
-      display: inline-flex;
-      align-items: center;
-    }
-
     #launcherPanel,
     #snippetPanel,
     #dataToolsPanel {
@@ -259,10 +245,6 @@
 
     function setVisible(id, isVisible) {
       el(id).style.display = isVisible ? "block" : "none";
-    }
-
-    function sayHello() {
-      el("msg").innerText = "Hello";
     }
 
     function showOnlyPanel(panelId) {
@@ -1121,14 +1103,10 @@
   </script>
 </head>
 <body>
-  <h3>OriginPlanet Launcher</h3>
-  <p class="subtitle">A tiny in-window launcher with persistent shortcuts.</p>
-
   <div id="homePanel" class="panel">
-    <div class="row">
-      <button class="primary" onclick="sayHello()">Press me</button>
-      <span id="msg"></span>
-    </div>
+    <h3>OriginPlanet Launcher</h3>
+    <p class="subtitle">A tiny in-window launcher with persistent shortcuts.</p>
+
     <div class="row">
       <button class="primary" onclick="openLauncher()">Open Path Opener Extension</button>
       <button class="primary" onclick="openSnippetPanel()">Open Pasting Extension</button>
