@@ -43,6 +43,11 @@ No simulation mode
 - No simulated backend behavior exists.
 - If HTA is not running or no ack arrives, HTML only shows warning status.
 
+Compatibility note
+------------------
+- HTA now checks whether `window.localStorage` exists before calling `getItem`/`setItem`.
+- If unavailable in that host configuration, HTA shows a warning instead of throwing script errors.
+
 Runtime requirements
 --------------------
 - Both files should be opened on the same machine/user profile.

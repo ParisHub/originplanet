@@ -30,6 +30,7 @@
 - Status tone colors for success/warning/error.
 
 ### `app.js`
+- Uses safe localStorage detection before read/write.
 - Writes command object to `localHelperBridge.command`.
 - Listens for `storage` updates on `localHelperBridge.ack`.
 - Shows warning if no ack is observed within timeout window.
@@ -42,6 +43,7 @@
 - Polls localStorage every 500ms for command key updates.
 - Executes only known action `open-c` by running `explorer.exe C:\`.
 - Publishes ack payload to `localHelperBridge.ack`.
+- If localStorage is unavailable in the HTA host, shows warning text and avoids script crashes.
 
 ## How to run
 
