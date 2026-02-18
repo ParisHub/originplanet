@@ -787,3 +787,43 @@ Updated docs to match terminology:
 - Internal variable and function names in script (`openLauncher`, `snippetEntries`, etc.) were intentionally not renamed in this pass to keep behavior risk low.
 - If a future cleanup wants full conceptual consistency, do a separate refactor pass for internal identifiers and persistence record prefixes.
 - This pass focuses strictly on outward terminology (UI + docs), not data schema changes.
+
+## 2026-02-18 — README full rework as product-style app introduction
+
+### 1) Request interpreted
+
+User requested a complete README redesign so the repository presents itself as a focused OriginPlanet Windows app (instead of a mixed/legacy project narrative), with a polished introduction style.
+
+### 2) Rewrite strategy used
+
+I replaced the previous README wholesale with a product-first structure that:
+
+- starts with a concise value proposition,
+- highlights the three current in-app capabilities,
+- adds an at-a-glance user flow,
+- keeps Windows run instructions easy to find,
+- lists only app-relevant project files,
+- and closes with a short product philosophy section.
+
+This keeps onboarding fast for new users while still being useful for future maintenance.
+
+### 3) Content decisions
+
+- Removed historical/cleanup framing and “mini app plan” scaffolding from the front page.
+- Removed emphasis on archived/non-app parts of repo from primary presentation.
+- Aligned terminology with current naming decision (`Path Opener Extension`, `Pasting Extension`).
+- Kept technical details intentionally lightweight and practical (HTA stack + single-file distribution note).
+
+### 4) Files changed
+
+- `README.md`
+  - Fully rewritten for a clean, product-oriented introduction and usage guide.
+
+- `REPO_WORKLOG.md`
+  - Added this entry to record rationale and exact scope of the README rework.
+
+### 5) Validation notes
+
+- Reviewed the rewritten README in plain text to confirm section order and readability.
+- Confirmed naming consistency with the current extension terminology.
+- Confirmed no code-path/runtime behavior changes were introduced in this pass.
