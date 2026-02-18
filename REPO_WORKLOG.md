@@ -427,3 +427,65 @@ If future optimization is needed, likely highest ROI next steps are:
 1. Add explicit path-candidate cache invalidation if runtime location can change dynamically.
 2. Introduce a small in-memory index for launcher entries if list size becomes large.
 3. Move inline JS into a separate `.js` file if HTA packaging constraints allow (improves maintainability/testing).
+
+## 2026-02-18 — Launcher header spacing + button auto-width polish
+
+### 1) Request interpreted
+
+User asked for two UI adjustments in the launcher area shown in screenshot feedback:
+
+1. Move the header action buttons (`Create`, `Delete`, `Home`) a bit to the right so the title/buttons don't look squeezed.
+2. Ensure button widths adapt to each button label text instead of looking overly fixed/squeezed.
+
+### 2) Changes made in `originplanet.hta`
+
+#### A) Global button sizing behavior
+
+Updated the shared `button` style to be explicitly content-sized:
+
+- `width: auto;`
+- `min-width: 0;`
+- `white-space: nowrap;`
+
+Why:
+
+- Keeps all button widths tied to text + padding.
+- Prevents inherited/fallback sizing behavior from forcing awkward widths.
+- Avoids multiline label wrapping that can make buttons look compressed.
+
+#### B) Launcher list item button sizing
+
+Updated `.launcher-item` (the dynamic app-entry launch buttons) from fixed-ish sizing to text-adaptive sizing:
+
+- Removed `min-width: 220px`
+- Added `width: auto`
+
+Why:
+
+- Lets each generated launcher button size naturally by label length.
+- Aligns with request that “other buttons” adapt to button text.
+
+#### C) Header button alignment/spacing
+
+Added a dedicated wrapper for launcher header actions:
+
+- New CSS class: `.launcher-header-actions`
+  - `display: inline-flex`
+  - `align-items: center`
+  - `gap: 8px`
+  - `margin-left: 12px`
+
+Updated launcher header markup so `Create/Delete/Home` buttons live in this wrapper, placed after the `App Launcher` title.
+
+Why:
+
+- Introduces clear horizontal offset from the title.
+- Makes top row read less cramped while preserving current structure and behavior.
+
+### 3) Validation notes
+
+- Performed source inspection after patch to confirm:
+  - new wrapper class exists and is used in launcher header markup,
+  - button sizing rules are present,
+  - `.launcher-item` fixed min-width has been removed.
+- This repository has no automated UI test harness for HTA rendering; visual validation should be done in HTA runtime.
