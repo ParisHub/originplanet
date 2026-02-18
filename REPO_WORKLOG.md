@@ -746,3 +746,84 @@ Action taken focused on user-facing repository overview text in `README.md`, rem
 
 - Verified expected modifications via line-numbered file inspection and `git diff`.
 - Confirmed no unintended file changes outside documentation cleanup scope.
+
+## 2026-02-18 — Terminology pivot from apps/modules to extensions
+
+### 1) Request interpreted
+
+Applied a product-language decision to stop referring to the launcher/snippet features as apps/modules in user-facing text and instead use **extensions** terminology.
+
+User-provided target examples:
+- `path opener extension` (for previous `App Launcher` concept)
+- `pasting extension` (for previous clipboard snippets concept)
+
+### 2) Implementation changes made
+
+Updated user-facing labels in `originplanet.hta`:
+- Home actions renamed to:
+  - `Open Path Opener Extension`
+  - `Open Pasting Extension`
+- Launcher panel title renamed from `App Launcher` -> `Path Opener Extension`
+- Launcher creation fields renamed:
+  - `App Name` -> `Path Name`
+  - `Folder Path` -> `Path Target`
+- Snippet panel title renamed from `Clipboard Snippets` -> `Pasting Extension`
+- Snippet creation fields renamed:
+  - `Snippet Name` -> `Pasting Extension Name`
+  - `Snippet Content` -> `Pasting Content`
+- Snippet/pasting status and helper copy updated to extension language (error, empty state, tooltip, success/failure copy messages).
+
+Updated docs to match terminology:
+- `README.md`
+  - `Quick launcher dashboard` -> `Path opener extension`
+  - `Personal clipboard snippets tool` -> `Pasting extension`
+- `docs/everything_app_feature_ideas.md`
+  - `module extension` phrasing -> `extension enhancement`
+  - `Global search across modules` -> `...across extensions`
+  - `Module toggles` -> `Extension toggles`
+
+### 3) Notes for future edits
+
+- Internal variable and function names in script (`openLauncher`, `snippetEntries`, etc.) were intentionally not renamed in this pass to keep behavior risk low.
+- If a future cleanup wants full conceptual consistency, do a separate refactor pass for internal identifiers and persistence record prefixes.
+- This pass focuses strictly on outward terminology (UI + docs), not data schema changes.
+
+## 2026-02-18 — README full rework as product-style app introduction
+
+### 1) Request interpreted
+
+User requested a complete README redesign so the repository presents itself as a focused OriginPlanet Windows app (instead of a mixed/legacy project narrative), with a polished introduction style.
+
+### 2) Rewrite strategy used
+
+I replaced the previous README wholesale with a product-first structure that:
+
+- starts with a concise value proposition,
+- highlights the three current in-app capabilities,
+- adds an at-a-glance user flow,
+- keeps Windows run instructions easy to find,
+- lists only app-relevant project files,
+- and closes with a short product philosophy section.
+
+This keeps onboarding fast for new users while still being useful for future maintenance.
+
+### 3) Content decisions
+
+- Removed historical/cleanup framing and “mini app plan” scaffolding from the front page.
+- Removed emphasis on archived/non-app parts of repo from primary presentation.
+- Aligned terminology with current naming decision (`Path Opener Extension`, `Pasting Extension`).
+- Kept technical details intentionally lightweight and practical (HTA stack + single-file distribution note).
+
+### 4) Files changed
+
+- `README.md`
+  - Fully rewritten for a clean, product-oriented introduction and usage guide.
+
+- `REPO_WORKLOG.md`
+  - Added this entry to record rationale and exact scope of the README rework.
+
+### 5) Validation notes
+
+- Reviewed the rewritten README in plain text to confirm section order and readability.
+- Confirmed naming consistency with the current extension terminology.
+- Confirmed no code-path/runtime behavior changes were introduced in this pass.

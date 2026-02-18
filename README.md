@@ -1,93 +1,82 @@
-# originplanet
+# OriginPlanet for Windows
 
-the first of its kind
+> A compact, native-feeling Windows utility built with HTA (`mshta.exe`) for fast everyday actions.
 
-## Windows mini app plan (documented)
+OriginPlanet is a single-file desktop helper focused on practical workflows:
 
-1. Build a tiny Windows-native style script app using built-in Windows tooling (HTA + VBScript).
-2. Keep UI minimal: one button and a text area next to it.
-3. On button press, display "Hello" next to the button.
-4. Document implementation and run instructions directly in this repository.
+- open frequently used paths quickly,
+- copy reusable text in one click,
+- and move data in and out through a readable transfer format.
 
-### Why this is powerful
+---
 
-- HTA runs with built-in Windows components (`mshta.exe`)—no external runtime needed.
-- You can combine HTML UI + VBScript/JScript + Windows shell commands.
-- Perfect for lightweight internal tools and personal automation.
+## ✨ What OriginPlanet includes
 
-### How to run (Windows)
+### 1) Path Opener Extension
+Create named buttons that open folders/locations directly from one panel.
 
-1. Copy `originplanet.hta` to a Windows 10 machine.
-2. Double-click the file, or run from cmd:
+**Good for:** workspaces, project folders, docs hubs, shared drives.
 
+### 2) Pasting Extension
+Save reusable text and copy it to clipboard instantly from named entries.
+
+**Good for:** message templates, email snippets, signatures, status updates.
+
+### 3) Data Import / Export
+Export your entries into a human-readable `.txt` format and import them back later.
+
+**Good for:** backup, migration, and manual inspection without editing internal storage directly.
+
+---
+
+## 🧭 User flow at a glance
+
+1. Launch `originplanet.hta`.
+2. From Home, open either extension panel.
+3. Add entries with **Create**.
+4. Click an entry to run/copy.
+5. Use **Delete** mode for cleanup.
+6. Use **Data Import / Export** to back up or restore.
+
+---
+
+## 🚀 Run on Windows
+
+OriginPlanet uses built-in Windows HTA hosting. No additional runtime is required.
+
+### Option A: double click
+- Double-click `originplanet.hta` in File Explorer.
+
+### Option B: command line
 ```bat
 mshta.exe originplanet.hta
 ```
 
-This opens a small window; pressing the button shows **Hello** next to it.
+---
 
-## Current repository layout
+## 🗂️ Main project files
 
-- `originplanet.hta` — primary HTA application entry point.
-- `docs/` — reference notes and source data files (`.md`, `.txt`, `.csv`).
-- `bad programs/` — archived experimental code kept out of the main app path.
-- `REPO_WORKLOG.md` — chronological implementation and maintenance log.
+- `originplanet.hta` — complete app UI + behavior.
+- `README.md` — product introduction and run guide.
+- `REPO_WORKLOG.md` — chronological implementation notes for future maintenance.
+- `docs/everything_app_feature_ideas.md` — future roadmap ideas for OriginPlanet.
 
-## Windows mini app implementation log
+---
 
-Implemented `originplanet.hta`:
+## 🛠️ Technical notes
 
-- Uses the built-in `mshta.exe` host available on standard Windows installs.
-- Defines a compact window with simple default Windows-like controls and Segoe UI font.
-- Adds a **Press me** button and a neighboring output label.
-- Wires the button to a script handler that sets the label text to `Hello`.
+- Stack: **HTA + HTML/CSS + JScript + ActiveX integrations**.
+- Distribution: **single-file app** (`originplanet.hta`) suitable for lightweight personal/internal tooling.
+- Persistence: entries are stored locally for reuse between launches.
 
-## Follow-up plan (documented)
+---
 
-1. Capture practical ideas the HTA mini app can grow into.
-2. Keep ideas realistic for built-in Windows scripting (HTA + VBScript/JScript).
-3. Document implementation options so the app can evolve without extra frameworks.
+## 📌 Philosophy
 
-## Cool things you can realize with this HTA app
+OriginPlanet is intentionally small and direct:
 
-Starting from this tiny button app, you can build surprisingly useful Windows tools:
+- low ceremony,
+- fast interaction,
+- practical day-to-day value.
 
-1. **Quick launcher dashboard**
-   - Add buttons to open favorite apps, folders, and websites.
-   - Example: open Notepad, Downloads folder, and a work URL from one window.
-
-2. **Personal clipboard snippets tool**
-   - Keep reusable text snippets (email replies, signatures, templates).
-   - Click a button to copy a snippet into the clipboard.
-
-3. **Mini task tracker (local file based)**
-   - Add task input + list and save to a local `.txt` or `.csv` file.
-   - Load tasks automatically when app starts.
-
-4. **System helper panel**
-   - Show quick system info (username, computer name, date/time, network status).
-   - Add one-click actions like clearing temp folders or opening Device Manager.
-
-5. **Study helper / flashcard app**
-   - Read questions from a text file and reveal answers on button press.
-   - Great for language learning or interview prep.
-
-6. **Simple timer + Pomodoro window**
-   - Start/stop timer with visual countdown.
-   - Add desktop popup reminders using built-in script commands.
-
-7. **File organizer assistant**
-   - Buttons to move files by extension (e.g., downloads to Images/PDFs/Docs).
-   - Useful for routine cleanup tasks.
-
-8. **Local notes panel**
-   - Small always-on-top note window for quick thoughts.
-   - Save and reload notes between sessions.
-
-9. **Data-entry form for CSV**
-   - Create fields (name, date, note) and append entries to CSV.
-   - Later open CSV in Excel for analysis.
-
-10. **Command palette for your own workflows**
-    - One input box where typing short commands triggers scripted actions.
-    - Example: `backup`, `open mail`, `today report`.
+If a workflow needs to happen repeatedly, it should be one click away.

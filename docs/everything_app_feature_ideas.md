@@ -22,7 +22,7 @@ A practical backlog of small, composable tools you can ship inside this HTA so t
 - **Deep work streak tracker**: count uninterrupted focus sessions.
 - **Break reminders**: periodic prompt to stretch/hydrate.
 
-## 5) Launcher Improvements (current module extension)
+## 5) Launcher Improvements (current extension enhancement)
 - **Categories/folders** for launchers (Work, Personal, Study).
 - **Pin to top** for frequently-used launchers.
 - **Usage count + last opened** metadata.
@@ -50,9 +50,9 @@ A practical backlog of small, composable tools you can ship inside this HTA so t
 - **Retro prompts** for projects (start/stop/continue).
 
 ## 10) Nice-to-have UX foundations
-- **Global search** across modules.
+- **Global search** across extensions.
 - **Keyboard-first controls** (Enter to submit, Esc to cancel).
-- **Module toggles** so only useful tools are visible.
+- **Extension toggles** so only useful tools are visible.
 - **Single backup file** with version stamp.
 
 ---
