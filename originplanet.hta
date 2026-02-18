@@ -247,6 +247,7 @@
 
     var activeDataFilePath = "";
     var pathCandidatesCache = null;
+    var panelIds = ["homePanel", "launcherPanel", "snippetPanel", "dataToolsPanel"];
 
     function el(id) {
       return document.getElementById(id);
@@ -260,11 +261,48 @@
       el("msg").innerText = "Hello";
     }
 
+    function showOnlyPanel(panelId) {
+      var i;
+
+      for (i = 0; i < panelIds.length; i++) {
+        setVisible(panelIds[i], panelIds[i] === panelId);
+      }
+    }
+
+    function setAllStatuses(message) {
+      setLauncherStatus(message);
+      setSnippetStatus(message);
+      setDataToolsStatus(message);
+    }
+
+    function findEntryIndexById(entries, entryId) {
+      var i;
+
+      for (i = 0; i < entries.length; i++) {
+        if (entries[i].id === entryId) {
+          return i;
+        }
+      }
+
+      return -1;
+    }
+
+    function bindEnterToAction(inputId, action) {
+      el(inputId).onkeypress = function(evt) {
+        evt = evt || window.event;
+        if (evt.keyCode === 13) {
+          action();
+        }
+      };
+    }
+
+    function renderAllEntryLists() {
+      renderLauncherEntries();
+      renderSnippetEntries();
+    }
+
     function openLauncher() {
-      setVisible("homePanel", false);
-      setVisible("snippetPanel", false);
-      setVisible("dataToolsPanel", false);
-      setVisible("launcherPanel", true);
+      showOnlyPanel("launcherPanel");
       launcherDeleteMode = false;
       updateLauncherDeleteToggleButton();
       renderLauncherEntries();
@@ -272,23 +310,15 @@
     }
 
     function openSnippetPanel() {
-      setVisible("homePanel", false);
-      setVisible("launcherPanel", false);
-      setVisible("dataToolsPanel", false);
-      setVisible("snippetPanel", true);
+      showOnlyPanel("snippetPanel");
       snippetDeleteMode = false;
       updateSnippetDeleteToggleButton();
       renderSnippetEntries();
       setSnippetStatus("Loaded " + snippetEntries.length + " snippet" + (snippetEntries.length === 1 ? "" : "s") + ".");
     }
 
-
-
     function openDataToolsPanel() {
-      setVisible("homePanel", false);
-      setVisible("launcherPanel", false);
-      setVisible("snippetPanel", false);
-      setVisible("dataToolsPanel", true);
+      showOnlyPanel("dataToolsPanel");
       el("dataTxtPath").value = getDefaultTxtPath();
       setDataToolsStatus("Use Export to create a readable .txt or Import to load from one.");
     }
@@ -300,10 +330,7 @@
       updateSnippetDeleteToggleButton();
       hideCreateDialog();
       hideSnippetCreateDialog();
-      setVisible("launcherPanel", false);
-      setVisible("snippetPanel", false);
-      setVisible("dataToolsPanel", false);
-      setVisible("homePanel", true);
+      showOnlyPanel("homePanel");
       setLauncherStatus("");
       setSnippetStatus("");
       setDataToolsStatus("");
@@ -410,22 +437,15 @@
     }
 
     function removeLauncherEntry(entryId) {
-      var idx = -1;
+      var idx = findEntryIndexById(launcherEntries, entryId);
       var removedName = "";
-      var i;
-
-      for (i = 0; i < launcherEntries.length; i++) {
-        if (launcherEntries[i].id === entryId) {
-          idx = i;
-          removedName = launcherEntries[i].name;
-          break;
-        }
-      }
 
       if (idx === -1) {
         setLauncherStatus("Entry not found.");
         return;
       }
+
+      removedName = launcherEntries[idx].name;
 
       if (!confirm("Delete launcher entry '" + removedName + "'?")) {
         return;
@@ -438,22 +458,15 @@
     }
 
     function removeSnippetEntry(entryId) {
-      var idx = -1;
+      var idx = findEntryIndexById(snippetEntries, entryId);
       var removedName = "";
-      var i;
-
-      for (i = 0; i < snippetEntries.length; i++) {
-        if (snippetEntries[i].id === entryId) {
-          idx = i;
-          removedName = snippetEntries[i].name;
-          break;
-        }
-      }
 
       if (idx === -1) {
         setSnippetStatus("Snippet not found.");
         return;
       }
+
+      removedName = snippetEntries[idx].name;
 
       if (!confirm("Delete snippet '" + removedName + "'?")) {
         return;
@@ -658,8 +671,7 @@
         stream.Write(obfuscated);
         stream.Close();
       } catch (e) {
-        setLauncherStatus("Could not save entries. " + e.message);
-        setSnippetStatus("Could not save entries. " + e.message);
+        setAllStatuses("Could not save entries. " + e.message);
       }
     }
 
@@ -688,8 +700,7 @@
         activeDataFilePath = dataPath || (candidates.length ? candidates[0] : "originplanet_data.opdb");
 
         if (!dataPath) {
-          renderLauncherEntries();
-          renderSnippetEntries();
+          renderAllEntryLists();
           return;
         }
 
@@ -700,12 +711,10 @@
         decoded = deobfuscateData(raw);
         deserializeAllEntries(decoded);
       } catch (e) {
-        setLauncherStatus("Could not load entries. " + e.message);
-        setSnippetStatus("Could not load entries. " + e.message);
+        setAllStatuses("Could not load entries. " + e.message);
       }
 
-      renderLauncherEntries();
-      renderSnippetEntries();
+      renderAllEntryLists();
     }
 
     function serializeAllEntries() {
@@ -823,8 +832,6 @@
       return out;
     }
 
-
-
     function exportDataToTxt() {
       var txtPath = trimValue(el("dataTxtPath").value);
       var lines;
@@ -847,7 +854,7 @@
         stream.Write(lines.join("\r\n"));
         stream.Close();
 
-        setDataToolsStatus("Exported readable data to: " + txtPath);
+        setDataToolsStatus("Exported " + (launcherEntries.length + snippetEntries.length) + " record" + ((launcherEntries.length + snippetEntries.length) === 1 ? "" : "s") + " to: " + txtPath);
       } catch (e) {
         setDataToolsStatus("Export failed. " + e.message);
       }
@@ -861,6 +868,7 @@
       var normalized;
       var lines;
       var filtered;
+      var joined;
       var i;
 
       if (!txtPath) {
@@ -896,12 +904,18 @@
           filtered.push(lines[i]);
         }
 
-        deserializeAllEntries(filtered.join("\n"));
-        renderLauncherEntries();
-        renderSnippetEntries();
+        joined = filtered.join("\n");
+
+        if (!joined) {
+          setDataToolsStatus("Import file has no records (L|... or S|...).");
+          return;
+        }
+
+        deserializeAllEntries(joined);
+        renderAllEntryLists();
         saveAllEntries();
 
-        setDataToolsStatus("Imported data from: " + txtPath);
+        setDataToolsStatus("Imported data from: " + txtPath + " (" + filtered.length + " record" + (filtered.length === 1 ? "" : "s") + ").");
       } catch (e) {
         setDataToolsStatus("Import failed. " + e.message);
       }
@@ -1039,26 +1053,9 @@
       updateSnippetDeleteToggleButton();
       loadAllEntries();
 
-      el("appName").onkeypress = function(evt) {
-        evt = evt || window.event;
-        if (evt.keyCode === 13) {
-          createLauncherButton();
-        }
-      };
-
-      el("folderPath").onkeypress = function(evt) {
-        evt = evt || window.event;
-        if (evt.keyCode === 13) {
-          createLauncherButton();
-        }
-      };
-
-      el("snippetName").onkeypress = function(evt) {
-        evt = evt || window.event;
-        if (evt.keyCode === 13) {
-          createSnippetButton();
-        }
-      };
+      bindEnterToAction("appName", createLauncherButton);
+      bindEnterToAction("folderPath", createLauncherButton);
+      bindEnterToAction("snippetName", createSnippetButton);
     };
   </script>
 </head>
