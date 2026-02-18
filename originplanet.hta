@@ -113,6 +113,10 @@
       display: none;
     }
 
+    #dataToolsPanel {
+      overflow-y: auto;
+    }
+
     #launcherButtons,
     #snippetButtons {
       display: flex;
@@ -258,16 +262,17 @@
     }
 
     function setVisible(id, isVisible) {
-      el(id).style.display = isVisible ? "flex" : "none";
+      el(id).style.display = isVisible ? "block" : "none";
     }
 
     function showOnlyPanel(panelId) {
       var i;
+      var panel;
 
       for (i = 0; i < panelIds.length; i++) {
-        setVisible(panelIds[i], panelIds[i] === panelId);
+        panel = el(panelIds[i]);
+        panel.style.display = panelIds[i] === panelId ? "flex" : "none";
       }
-
     }
 
     function setInitialWindowSize() {

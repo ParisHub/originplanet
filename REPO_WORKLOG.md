@@ -1012,3 +1012,43 @@ Result:
 - If startup size should adapt by display class (e.g., small laptop vs ultrawide), make `1100x760` configurable constants.
 - If `100vh` behaves inconsistently in a specific HTA host/version, fallback to `height: 100%` only with explicit parent sizing.
 - If future panel content needs independent sections to stretch, keep using flex layout with `min-height: 0` on scrollable children.
+
+## 2026-02-18 — Regression fix after full-height/flex pass
+
+### 1) What broke and why
+
+User reported the app was broken after the previous layout refactor.
+
+Root cause identified in JS visibility helper wiring:
+- `setVisible(...)` had been changed globally to use `display: flex`.
+- That helper is used not only for full-screen panels, but also for create dialogs.
+- Dialog containers are not intended to be flex parents in this UI, so they rendered incorrectly / unexpectedly.
+
+### 2) Fix applied
+
+#### A) Split behavior by intent (panel vs generic element)
+
+- Restored `setVisible(...)` to generic `block/none` behavior.
+- Updated `showOnlyPanel(...)` to directly control only top-level panels and show active panel as `display: flex`.
+
+This keeps:
+- panel-level fill layout behavior,
+- while avoiding accidental flex rendering on dialog containers.
+
+#### B) Data tools panel overflow safety
+
+- Added `#dataToolsPanel { overflow-y: auto; }` so longer content in that panel can scroll rather than clip.
+
+### 3) Validation performed
+
+- Source inspection for helper split correctness:
+  - `setVisible` now `block/none`
+  - `showOnlyPanel` now panel-specific flex toggling
+- Source inspection for data-tools vertical overflow handling.
+- Ran `git diff --check` for patch hygiene.
+
+### 4) Maintenance notes for future me
+
+- Keep `setVisible(...)` generic (block/none) and avoid mixing layout semantics into utility helpers.
+- For future panel-level layout requirements, always handle in panel-specific controller functions.
+- If dialog containers ever need flex, apply via dedicated class/CSS rather than global visibility helper behavior.
