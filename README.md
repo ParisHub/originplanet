@@ -63,6 +63,20 @@ mshta.exe originplanet.hta
 
 ---
 
+
+## 🧰 Maintainer workflow
+
+To keep future iterations easy to pick up, this repository uses three planning artifacts:
+
+- `plans.txt` for raw, fast idea capture.
+- `docs/everything_app_feature_ideas.md` for organized roadmap structure.
+- `REPO_WORKLOG.md` for chronological session notes and rationale.
+
+Recommended flow for each session:
+1. Capture unstructured ideas in `plans.txt`.
+2. Promote actionable items into the roadmap doc.
+3. Record what actually changed (and why) in `REPO_WORKLOG.md`.
+
 ## 🛠️ Technical notes
 
 - Stack: **HTA + HTML/CSS + JScript + ActiveX integrations**.
