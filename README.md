@@ -56,10 +56,42 @@ mshta.exe originplanet.hta
 
 ## 🗂️ Main project files
 
-- `originplanet.hta` — complete app UI + behavior.
+- `originplanet.hta` — complete app UI + behavior, now including TXT startup config and C-hub demo button.
+- `originplanet_config.txt` — startup window preferences (size/position/state).
+- `c_hub/originplanet_c_hub.c` — minimal cross-platform C compute helper (`--eval 2+3`).
 - `README.md` — product introduction and run guide.
 - `REPO_WORKLOG.md` — chronological implementation notes for future maintenance.
 - `docs/everything_app_feature_ideas.md` — future roadmap ideas for OriginPlanet.
+
+---
+
+
+## 🧰 Maintainer workflow
+
+To keep future iterations easy to pick up, this repository uses three planning artifacts:
+
+- `plans.txt` for raw, fast idea capture.
+- `docs/everything_app_feature_ideas.md` for organized roadmap structure.
+- `REPO_WORKLOG.md` for chronological session notes and rationale.
+
+Recommended flow for each session:
+1. Capture unstructured ideas in `plans.txt`.
+2. Promote actionable items into the roadmap doc.
+3. Record what actually changed (and why) in `REPO_WORKLOG.md`.
+
+## 🧪 C hub + Windows app integration (new)
+
+OriginPlanet now includes a first end-to-end integration path for local compute:
+
+1. HTA loads `originplanet_config.txt` on startup.
+2. Window size and position are applied from config values.
+3. Dashboard button **Run 2+3 via C Hub** executes `originplanet_c_hub.exe --eval 2+3`.
+4. The result is shown immediately next to the button.
+
+### Build the C hub executable
+Compile `c_hub/originplanet_c_hub.c` and place the resulting `originplanet_c_hub.exe` next to `originplanet.hta`.
+
+See `c_hub/README.md` for compiler-specific commands.
 
 ---
 
