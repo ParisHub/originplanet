@@ -1093,3 +1093,42 @@ Behavior intent now:
 
 - If users on very small displays still report trouble, reduce default size and/or increase startup margins.
 - If multi-monitor behavior needs refinement, compute center from active monitor instead of global `screen` metrics.
+
+## 2026-02-18 — Fix white extension view regression (HTA-safe panel visibility/layout)
+
+### 1) User issue
+
+User reported that opening an extension showed a white screen instead of extension content.
+
+### 2) Likely root cause
+
+Recent refactor had panel switching using `display: flex` inline and relied on flex-driven fill behavior.
+In HTA/IE-hosted rendering, flex behavior can be inconsistent and this likely caused panel content to disappear or render incorrectly in extension views.
+
+### 3) Fix strategy
+
+Moved panel visibility/rendering back to conservative HTA-safe behavior:
+
+- `showOnlyPanel(...)` now uses generic `setVisible(...)` (`block/none`) for all top-level panels.
+- Kept dialog visibility behavior unchanged (also `block/none`).
+- Removed flex-dependent panel layout requirements from `.panel`.
+- Removed flex-grow dependency for extension lists and used a viewport-capped scroll area instead:
+  - `max-height: 58vh`
+  - `overflow-y: auto`
+
+### 4) Why this should work better
+
+- `display: block` visibility toggling is stable across HTA hosts.
+- Extension list scrolling remains available without depending on flex box sizing internals.
+- Startup one-time sizing behavior remains unchanged.
+
+### 5) Validation
+
+- Source inspection of panel switching and list layout CSS.
+- `git diff --check` for patch hygiene.
+- Attempted screenshot tooling still blocked by environment browser/runtime instability in this session.
+
+### 6) Maintenance notes for future me
+
+- Prefer HTA-safe layout primitives (`block`, fixed/viewport-capped heights, overflow scroll) over complex flex-only assumptions.
+- If a modern host is introduced later, flex layout can be reintroduced behind host/version checks.

@@ -63,8 +63,6 @@
       backdrop-filter: blur(2px);
       box-sizing: border-box;
       height: 100%;
-      display: flex;
-      flex-direction: column;
       min-height: 0;
     }
 
@@ -126,8 +124,7 @@
       overflow-y: auto;
       overflow-x: hidden;
       padding-right: 4px;
-      flex: 1 1 auto;
-      min-height: 0;
+      max-height: 58vh;
     }
 
     .launcher-row,
@@ -267,11 +264,9 @@
 
     function showOnlyPanel(panelId) {
       var i;
-      var panel;
 
       for (i = 0; i < panelIds.length; i++) {
-        panel = el(panelIds[i]);
-        panel.style.display = panelIds[i] === panelId ? "flex" : "none";
+        setVisible(panelIds[i], panelIds[i] === panelId);
       }
     }
 
