@@ -746,3 +746,44 @@ Action taken focused on user-facing repository overview text in `README.md`, rem
 
 - Verified expected modifications via line-numbered file inspection and `git diff`.
 - Confirmed no unintended file changes outside documentation cleanup scope.
+
+## 2026-02-18 — Terminology pivot from apps/modules to extensions
+
+### 1) Request interpreted
+
+Applied a product-language decision to stop referring to the launcher/snippet features as apps/modules in user-facing text and instead use **extensions** terminology.
+
+User-provided target examples:
+- `path opener extension` (for previous `App Launcher` concept)
+- `pasting extension` (for previous clipboard snippets concept)
+
+### 2) Implementation changes made
+
+Updated user-facing labels in `originplanet.hta`:
+- Home actions renamed to:
+  - `Open Path Opener Extension`
+  - `Open Pasting Extension`
+- Launcher panel title renamed from `App Launcher` -> `Path Opener Extension`
+- Launcher creation fields renamed:
+  - `App Name` -> `Path Name`
+  - `Folder Path` -> `Path Target`
+- Snippet panel title renamed from `Clipboard Snippets` -> `Pasting Extension`
+- Snippet creation fields renamed:
+  - `Snippet Name` -> `Pasting Extension Name`
+  - `Snippet Content` -> `Pasting Content`
+- Snippet/pasting status and helper copy updated to extension language (error, empty state, tooltip, success/failure copy messages).
+
+Updated docs to match terminology:
+- `README.md`
+  - `Quick launcher dashboard` -> `Path opener extension`
+  - `Personal clipboard snippets tool` -> `Pasting extension`
+- `docs/everything_app_feature_ideas.md`
+  - `module extension` phrasing -> `extension enhancement`
+  - `Global search across modules` -> `...across extensions`
+  - `Module toggles` -> `Extension toggles`
+
+### 3) Notes for future edits
+
+- Internal variable and function names in script (`openLauncher`, `snippetEntries`, etc.) were intentionally not renamed in this pass to keep behavior risk low.
+- If a future cleanup wants full conceptual consistency, do a separate refactor pass for internal identifiers and persistence record prefixes.
+- This pass focuses strictly on outward terminology (UI + docs), not data schema changes.

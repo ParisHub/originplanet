@@ -52,13 +52,13 @@ Implemented `originplanet.hta`:
 
 Starting from this tiny button app, you can build surprisingly useful Windows tools:
 
-1. **Quick launcher dashboard**
-   - Add buttons to open favorite apps, folders, and websites.
+1. **Path opener extension**
+   - Add named path entries to open favorite folders and websites.
    - Example: open Notepad, Downloads folder, and a work URL from one window.
 
-2. **Personal clipboard snippets tool**
-   - Keep reusable text snippets (email replies, signatures, templates).
-   - Click a button to copy a snippet into the clipboard.
+2. **Pasting extension**
+   - Keep reusable text blocks (email replies, signatures, templates).
+   - Click a button to copy a saved pasting extension into the clipboard.
 
 3. **Mini task tracker (local file based)**
    - Add task input + list and save to a local `.txt` or `.csv` file.

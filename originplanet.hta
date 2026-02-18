@@ -420,7 +420,7 @@
       var content = trimValue(el("snippetContent").value);
 
       if (!name || !content) {
-        el("snippetCreateError").innerText = "Please provide both snippet name and snippet content.";
+        el("snippetCreateError").innerText = "Please provide both extension name and extension content.";
         return;
       }
 
@@ -533,7 +533,7 @@
       container.innerHTML = "";
 
       if (!snippetEntries.length) {
-        container.innerHTML = "<div>No snippets yet. Click Create to add one.</div>";
+        container.innerHTML = "<div>No pasting extensions yet. Click Create to add one.</div>";
         return;
       }
 
@@ -544,7 +544,7 @@
         snippetBtn = document.createElement("button");
         snippetBtn.className = "snippet-item";
         snippetBtn.innerText = snippetEntries[i].name;
-        snippetBtn.title = "Click to copy this snippet";
+        snippetBtn.title = "Click to copy this extension";
         snippetBtn.onclick = (function(name, content) {
           return function() { copySnippetContent(name, content); };
         })(snippetEntries[i].name, snippetEntries[i].content);
@@ -570,14 +570,14 @@
       try {
         if (window.clipboardData && window.clipboardData.setData) {
           window.clipboardData.setData("Text", content);
-          setSnippetStatus("Copied snippet: " + name);
+          setSnippetStatus("Copied pasting extension: " + name);
           return;
         }
 
         copyWithFallbackTextbox(content);
-        setSnippetStatus("Copied snippet: " + name);
+        setSnippetStatus("Copied pasting extension: " + name);
       } catch (e) {
-        setSnippetStatus("Could not copy snippet. " + e.message);
+        setSnippetStatus("Could not copy pasting extension. " + e.message);
       }
     }
 
@@ -1069,15 +1069,15 @@
       <span id="msg"></span>
     </div>
     <div class="row">
-      <button class="primary" onclick="openLauncher()">Open App Launcher</button>
-      <button class="primary" onclick="openSnippetPanel()">Open Clipboard Snippets</button>
+      <button class="primary" onclick="openLauncher()">Open Path Opener Extension</button>
+      <button class="primary" onclick="openSnippetPanel()">Open Pasting Extension</button>
       <button class="ghost" onclick="openDataToolsPanel()">Open Data Import / Export</button>
     </div>
   </div>
 
   <div id="launcherPanel" class="panel">
     <div class="row">
-      <span class="panel-title">App Launcher</span>
+      <span class="panel-title">Path Opener Extension</span>
       <div class="launcher-header-actions">
         <button class="primary" onclick="showCreateDialog()">Create</button>
         <button id="toggleDeleteButton" class="ghost" onclick="toggleDeleteMode()">Delete</button>
@@ -1087,12 +1087,12 @@
 
     <div id="createDialog">
       <div class="form-row">
-        <label for="appName">App Name</label>
-        <input id="appName" type="text" placeholder="Example: Work Docs" />
+        <label for="appName">Path Name</label>
+        <input id="appName" type="text" placeholder="Example: Work Docs Path" />
       </div>
 
       <div class="form-row">
-        <label for="folderPath">Folder Path</label>
+        <label for="folderPath">Path Target</label>
         <input id="folderPath" type="text" placeholder="Example: C:\\Users\\You\\Documents" />
       </div>
 
@@ -1110,7 +1110,7 @@
 
   <div id="snippetPanel" class="panel">
     <div class="row">
-      <span class="panel-title">Clipboard Snippets</span>
+      <span class="panel-title">Pasting Extension</span>
       <div class="snippet-header-actions">
         <button class="primary" onclick="showSnippetCreateDialog()">Create</button>
         <button id="toggleSnippetDeleteButton" class="ghost" onclick="toggleSnippetDeleteMode()">Delete</button>
@@ -1120,13 +1120,13 @@
 
     <div id="snippetCreateDialog">
       <div class="form-row">
-        <label for="snippetName">Snippet Name</label>
+        <label for="snippetName">Pasting Extension Name</label>
         <input id="snippetName" type="text" placeholder="Example: Team Standup Update" />
       </div>
 
       <div class="form-row">
-        <label for="snippetContent">Snippet Content</label>
-        <textarea id="snippetContent" placeholder="Write the text you want copied when clicking this snippet button."></textarea>
+        <label for="snippetContent">Pasting Content</label>
+        <textarea id="snippetContent" placeholder="Write the text you want copied when clicking this pasting extension button."></textarea>
       </div>
 
       <div id="snippetCreateError"></div>
