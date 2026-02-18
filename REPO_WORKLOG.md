@@ -827,3 +827,379 @@ This keeps onboarding fast for new users while still being useful for future mai
 - Reviewed the rewritten README in plain text to confirm section order and readability.
 - Confirmed naming consistency with the current extension terminology.
 - Confirmed no code-path/runtime behavior changes were introduced in this pass.
+
+## 2026-02-18 — Dynamic HTA window resizing support
+
+### 1) Request interpreted
+
+Implemented dynamic window resizing behavior so OriginPlanet is no longer fixed to a dialog-style frame and can adjust to UI state changes.
+
+### 2) What changed in `originplanet.hta`
+
+- Enabled user-resizable HTA frame:
+  - `BORDER="dialog"` -> `BORDER="thick"`
+  - Added `RESIZE="yes"`
+- Added a new helper: `syncWindowToContent()`
+  - Computes target dimensions from current document body content (`scrollWidth` / `scrollHeight`).
+  - Adds small frame paddings for non-client area.
+  - Clamps to practical min/max bounds:
+    - min: `700 x 480`
+    - max: screen available size fallback (`1600 x 1200`)
+  - Calls `window.resizeTo(...)` when available.
+- Hooked dynamic resize helper to UI transitions:
+  - After panel changes in `showOnlyPanel(...)`
+  - After create-dialog open/close in launcher panel
+  - After create-dialog open/close in pasting panel
+  - On app load (`window.onload`) after initial data hydration
+
+### 3) Why this approach
+
+- HTA-level resizing (`RESIZE="yes"`) allows manual drag resizing by the user.
+- Content-sync resize avoids clipped UI when switching between compact/expanded views.
+- Min/max constraints prevent tiny unusable windows or oversized growth.
+- Kept implementation additive (small helper + call sites) to minimize regression risk.
+
+### 4) Validation done
+
+- Ran a focused source check for resize-related edits and call sites.
+- Ran `git diff --check` to confirm patch hygiene.
+- Captured a browser-rendered screenshot artifact of the updated UI for visual verification.
+
+### 5) Maintenance notes for future me
+
+- If users report the window "fighting" their manual size, consider making `syncWindowToContent()` opt-in only for panel transitions and not dialog toggles.
+- If additional panels are added, they will automatically trigger resize when shown via `showOnlyPanel(...)`.
+- If minimum size needs to be configurable, lift constants into top-level vars near other app state config.
+
+## 2026-02-18 — Resizing flicker follow-up + scrollable extension button lists
+
+### 1) User feedback addressed
+
+Follow-up issues reported after the first dynamic resize pass:
+
+1. Vertical-only manual resizing showed flicker.
+2. Extension button lists were cut off when window height became small.
+
+### 2) Implementation adjustments
+
+#### A) Reduced resize contention during vertical manual resizing
+
+- Kept the HTA window user-resizable (`BORDER="thick"` + `RESIZE="yes"` unchanged).
+- Updated `syncWindowToContent()` so it no longer force-recomputes height from content on each call.
+  - Width still adapts to content (`body.scrollWidth + padding`).
+  - Height now respects current window height (`window.outerHeight`) with min/max clamping.
+- Removed `syncWindowToContent()` calls from dialog show/hide handlers to avoid unnecessary resize nudges during rapid UI interactions.
+
+Why this helps:
+- The prior behavior was more likely to fight user-driven vertical adjustments by recomputing height from content snapshots.
+- Respecting current height avoids that tug-of-war while preserving dynamic width behavior and initial layout sizing.
+
+#### B) Made extension button lists scrollable
+
+- Updated list container CSS for both:
+  - `#launcherButtons`
+  - `#snippetButtons`
+- Added:
+  - `overflow-y: auto;`
+  - `overflow-x: hidden;`
+  - `padding-right: 4px;`
+- Added `updateScrollableListHeights()` helper to compute a practical `maxHeight` based on viewport height with a floor value.
+- Invoked `updateScrollableListHeights()`:
+  - from `syncWindowToContent()`
+  - on native `window.onresize`
+
+Why this helps:
+- When window height is reduced, the button areas now get their own vertical scroll instead of clipping content.
+- The layout remains usable even in constrained window sizes.
+
+### 3) Validation performed
+
+- Ran source inspection focused on resize logic and scroll container behavior.
+- Ran `git diff --check` for patch hygiene.
+- Attempted screenshot capture via browser tool; current container/browser path to the local app remains unavailable in this environment.
+
+### 4) Maintenance notes for future me
+
+- If product intent later requires auto-height growth again, reintroduce it behind a feature flag and disable it while user is actively resizing.
+- If panel header/content structure changes significantly, revisit the `availableHeight - 260` offset in `updateScrollableListHeights()`.
+- If UI must support very tiny windows, lower the list `minimumHeight` from `140` after usability test.
+
+## 2026-02-18 — Home-only headline + remove legacy home button
+
+### 1) User feedback addressed
+
+Requested UI cleanup after previous resize passes:
+
+1. Remove the `Press me` button from Home.
+2. Show the app headline/headbar only in Home, not inside extension panels.
+
+### 2) Implementation changes
+
+#### A) Removed legacy Home interaction row
+
+- Deleted the Home row containing:
+  - `Press me` button
+  - `msg` status pill
+- Removed now-unused `sayHello()` function.
+- Removed now-unused `#msg` style block.
+
+#### B) Scoped headline/subtitle to Home panel only
+
+- Moved top-level headline content into `#homePanel`:
+  - `<h3>OriginPlanet Launcher</h3>`
+  - subtitle paragraph
+- This ensures extension views (`Path Opener`, `Pasting`, `Data Import / Export`) no longer render the home headline area.
+
+### 3) Validation performed
+
+- Source inspection to ensure headline appears only inside `#homePanel` markup.
+- Source inspection to ensure no remaining `sayHello()` references.
+- Ran `git diff --check` for patch hygiene.
+
+### 4) Maintenance notes for future me
+
+- If we later add a shared app chrome across all panels, re-introduce it as a dedicated layout shell instead of home-specific content.
+- If introducing a new home CTA, keep it functional (or omit entirely) to avoid dead/demo interactions.
+
+## 2026-02-18 — Remove post-load auto-resize and make panels fill vertical space
+
+### 1) User feedback addressed
+
+Two issues were called out:
+
+1. Too much empty space at the bottom of the window in extension views.
+2. Auto-resizing after startup was annoying; desired behavior is one reasonable startup size only.
+
+### 2) Implementation changes in `originplanet.hta`
+
+#### A) One-time startup sizing only
+
+- Removed ongoing auto-resize behavior and helper chain from normal interactions.
+- Added `setInitialWindowSize()` with fixed startup target size:
+  - width: `1100`
+  - height: `760`
+  - clamped to `screen.availWidth/availHeight`
+- Called `setInitialWindowSize()` only once during `window.onload`.
+- Kept manual user resizing enabled via HTA settings from earlier passes.
+
+Result:
+- App opens at a practical default size.
+- No further automatic resizing while user navigates panels or edits content.
+
+#### B) Filled vertical layout to avoid bottom dead space
+
+- Updated layout to occupy full viewport height:
+  - Added `html, body { height: 100%; }`
+  - Set `body` to `height: 100vh`, `overflow: hidden`, and tighter padding.
+  - Converted `.panel` to full-height flex column container.
+- Updated panel visibility toggling to use `display: flex` for shown panels.
+- Updated extension list containers (`#launcherButtons`, `#snippetButtons`) to flex-grow and consume remaining vertical space.
+
+Result:
+- Active panel now fills the window interior.
+- Button list region expands to use available height; when needed, it scrolls instead of leaving the old large bottom void.
+
+### 3) Validation performed
+
+- Source inspection for removal of old post-load auto-resize hooks.
+- Source inspection for one-time startup sizing call in `window.onload`.
+- Source inspection for full-height/flex layout wiring for panel + list containers.
+- Ran `git diff --check` for patch hygiene.
+- Attempted screenshot capture via browser tooling; local app URL remains unreachable from that environment in this session.
+
+### 4) Maintenance notes for future me
+
+- If startup size should adapt by display class (e.g., small laptop vs ultrawide), make `1100x760` configurable constants.
+- If `100vh` behaves inconsistently in a specific HTA host/version, fallback to `height: 100%` only with explicit parent sizing.
+- If future panel content needs independent sections to stretch, keep using flex layout with `min-height: 0` on scrollable children.
+
+## 2026-02-18 — Regression fix after full-height/flex pass
+
+### 1) What broke and why
+
+User reported the app was broken after the previous layout refactor.
+
+Root cause identified in JS visibility helper wiring:
+- `setVisible(...)` had been changed globally to use `display: flex`.
+- That helper is used not only for full-screen panels, but also for create dialogs.
+- Dialog containers are not intended to be flex parents in this UI, so they rendered incorrectly / unexpectedly.
+
+### 2) Fix applied
+
+#### A) Split behavior by intent (panel vs generic element)
+
+- Restored `setVisible(...)` to generic `block/none` behavior.
+- Updated `showOnlyPanel(...)` to directly control only top-level panels and show active panel as `display: flex`.
+
+This keeps:
+- panel-level fill layout behavior,
+- while avoiding accidental flex rendering on dialog containers.
+
+#### B) Data tools panel overflow safety
+
+- Added `#dataToolsPanel { overflow-y: auto; }` so longer content in that panel can scroll rather than clip.
+
+### 3) Validation performed
+
+- Source inspection for helper split correctness:
+  - `setVisible` now `block/none`
+  - `showOnlyPanel` now panel-specific flex toggling
+- Source inspection for data-tools vertical overflow handling.
+- Ran `git diff --check` for patch hygiene.
+
+### 4) Maintenance notes for future me
+
+- Keep `setVisible(...)` generic (block/none) and avoid mixing layout semantics into utility helpers.
+- For future panel-level layout requirements, always handle in panel-specific controller functions.
+- If dialog containers ever need flex, apply via dedicated class/CSS rather than global visibility helper behavior.
+
+## 2026-02-18 — Follow-up fix: preserve manual resizing affordance
+
+### 1) User feedback addressed
+
+User reported manual window resizing felt disabled after the startup-sizing/full-height changes.
+
+### 2) Root cause hypothesis and adjustment strategy
+
+Likely issue on some setups:
+- startup sizing could clamp to full available screen dimensions,
+- which can make edge/corner grab affordances awkward (especially near screen/taskbar edges),
+- creating a practical "can't resize" experience even if `RESIZE="yes"` is still set.
+
+### 3) Implementation change
+
+Adjusted `setInitialWindowSize()` to keep startup window comfortably below screen bounds and centered:
+
+- Added safety margins when clamping startup size:
+  - right margin: `80`
+  - bottom margin: `80`
+- Added floor values to avoid tiny window startup:
+  - min width: `760`
+  - min height: `520`
+- After `window.resizeTo(...)`, now centers the window via `window.moveTo(...)` when available.
+
+Behavior intent now:
+- one-time startup sizing remains,
+- no post-load auto-resize remains,
+- manual resizing should remain easy because the initial window is not pinned against screen edges.
+
+### 4) Validation performed
+
+- Source inspection of updated `setInitialWindowSize()` bounds/margins/centering logic.
+- Verified no continuous resize hooks were reintroduced.
+- Ran `git diff --check` for patch hygiene.
+
+### 5) Maintenance notes for future me
+
+- If users on very small displays still report trouble, reduce default size and/or increase startup margins.
+- If multi-monitor behavior needs refinement, compute center from active monitor instead of global `screen` metrics.
+
+## 2026-02-18 — Fix white extension view regression (HTA-safe panel visibility/layout)
+
+### 1) User issue
+
+User reported that opening an extension showed a white screen instead of extension content.
+
+### 2) Likely root cause
+
+Recent refactor had panel switching using `display: flex` inline and relied on flex-driven fill behavior.
+In HTA/IE-hosted rendering, flex behavior can be inconsistent and this likely caused panel content to disappear or render incorrectly in extension views.
+
+### 3) Fix strategy
+
+Moved panel visibility/rendering back to conservative HTA-safe behavior:
+
+- `showOnlyPanel(...)` now uses generic `setVisible(...)` (`block/none`) for all top-level panels.
+- Kept dialog visibility behavior unchanged (also `block/none`).
+- Removed flex-dependent panel layout requirements from `.panel`.
+- Removed flex-grow dependency for extension lists and used a viewport-capped scroll area instead:
+  - `max-height: 58vh`
+  - `overflow-y: auto`
+
+### 4) Why this should work better
+
+- `display: block` visibility toggling is stable across HTA hosts.
+- Extension list scrolling remains available without depending on flex box sizing internals.
+- Startup one-time sizing behavior remains unchanged.
+
+### 5) Validation
+
+- Source inspection of panel switching and list layout CSS.
+- `git diff --check` for patch hygiene.
+- Attempted screenshot tooling still blocked by environment browser/runtime instability in this session.
+
+### 6) Maintenance notes for future me
+
+- Prefer HTA-safe layout primitives (`block`, fixed/viewport-capped heights, overflow scroll) over complex flex-only assumptions.
+- If a modern host is introduced later, flex layout can be reintroduced behind host/version checks.
+
+## 2026-02-18 — Stabilization pass after repeated UI regressions
+
+### 1) Situation and goal
+
+User reported severe regression from current branch state:
+- extension panels rendering as white/blank,
+- inability to reliably access expected screens.
+
+Goal for this pass was stability-first repair (not another fragile tweak):
+- restore reliable Home/extension visibility,
+- keep one-time startup window sizing,
+- keep manual resizing,
+- keep extension list scroll behavior.
+
+### 2) Root-cause direction used
+
+Likely fragility factors in HTA/IE host:
+- viewport units (`vh`) and overflow clipping behavior,
+- aggressive full-height assumptions across `body`/`.panel`,
+- visibility/layout interactions that are fine in modern browsers but unreliable in HTA runtime.
+
+### 3) Changes made in this stabilization pass
+
+#### A) Removed fragile viewport-unit + clipping dependency
+
+- Replaced `body { height: 100vh; overflow: hidden; }` with conservative:
+  - `body { overflow: auto; }`
+- Kept `html, body { height: 100%; }` for baseline compatibility.
+
+#### B) Removed hard full-height panel forcing
+
+- Simplified `.panel` by removing `height: 100%` and `min-height` forcing.
+- This avoids parent-height chain dependence that can produce blank rendering in older hosts.
+
+#### C) Hardened panel visibility initialization and transitions
+
+- Kept `setVisible(...)` with `block/none`.
+- Kept `showOnlyPanel(...)` using `setVisible(...)` for top-level panels.
+- Explicitly call `showOnlyPanel("homePanel")` on startup to guarantee Home is visible from a known state.
+
+#### D) Retained scrollability without `vh` dependence
+
+- Replaced static `58vh` list cap with HTA-safe JS computed pixel cap.
+- Added `updateListViewportMaxHeight()`:
+  - computes target list height from `document.documentElement.clientHeight - 320`,
+  - enforces minimum `180px`,
+  - applies to both `#launcherButtons` and `#snippetButtons`.
+- Called on:
+  - startup,
+  - `window.onresize`.
+
+### 4) Behavioral outcome intended
+
+- Home screen is explicitly restored on load.
+- Extension panel switching uses stable `block/none` behavior.
+- Lists remain scrollable in smaller windows.
+- Startup window sizing remains one-time only (`setInitialWindowSize()`), with no continuous auto-resize loop.
+
+### 5) Validation done
+
+- Source inspection for all changed visibility/layout initialization call sites.
+- Source inspection confirming no reintroduction of continuous auto window resizing.
+- `git diff --check` for patch hygiene.
+- Attempted screenshot automation; browser-tool network/runtime remains unstable in this environment.
+
+### 6) Future maintenance guardrails
+
+- Prefer HTA-safe layout primitives and avoid viewport-unit hard dependencies.
+- Keep visibility utility generic; avoid coupling visibility helpers with layout mode changes.
+- When adding sizing logic, favor explicit startup setup + lightweight runtime recalculation for internal scroll containers only.

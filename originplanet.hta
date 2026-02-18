@@ -6,21 +6,29 @@
   <HTA:APPLICATION
     ID="WinHello"
     APPLICATIONNAME="Windows 10 Hello App"
-    BORDER="dialog"
+    BORDER="thick"
     CAPTION="yes"
     SHOWINTASKBAR="yes"
+    RESIZE="yes"
     SINGLEINSTANCE="yes"
     SYSMENU="yes"
     SCROLL="no"
     WINDOWSTATE="normal"
   />
   <style>
+    html,
+    body {
+      height: 100%;
+    }
+
     body {
       font-family: Segoe UI, Tahoma, sans-serif;
       margin: 0;
-      padding: 28px;
+      padding: 18px;
       background: linear-gradient(160deg, #f1f6ff 0%, #eaf0ff 45%, #f7efff 100%);
       color: #1c2435;
+      box-sizing: border-box;
+      overflow: auto;
     }
 
     h3 {
@@ -52,6 +60,7 @@
       padding: 18px;
       box-shadow: 0 10px 30px rgba(39, 61, 120, 0.12);
       backdrop-filter: blur(2px);
+      box-sizing: border-box;
     }
 
     button {
@@ -93,25 +102,14 @@
       color: #7c1129;
     }
 
-    #msg {
-      min-width: 120px;
-      font-size: 14px;
-      color: #0f7a3f;
-      font-weight: 700;
-      background: #e9fff3;
-      border: 1px solid #b7ebcc;
-      border-radius: 999px;
-      padding: 4px 10px;
-      min-height: 18px;
-      display: inline-flex;
-      align-items: center;
-    }
-
     #launcherPanel,
     #snippetPanel,
     #dataToolsPanel {
       display: none;
-      margin-top: 14px;
+    }
+
+    #dataToolsPanel {
+      overflow-y: auto;
     }
 
     #launcherButtons,
@@ -120,6 +118,10 @@
       flex-direction: column;
       gap: 8px;
       margin-top: 10px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-right: 4px;
+      max-height: 420px;
     }
 
     .launcher-row,
@@ -257,15 +259,70 @@
       el(id).style.display = isVisible ? "block" : "none";
     }
 
-    function sayHello() {
-      el("msg").innerText = "Hello";
-    }
-
     function showOnlyPanel(panelId) {
       var i;
 
       for (i = 0; i < panelIds.length; i++) {
         setVisible(panelIds[i], panelIds[i] === panelId);
+      }
+    }
+
+    function updateListViewportMaxHeight() {
+      var viewportHeight = document.documentElement && document.documentElement.clientHeight ? document.documentElement.clientHeight : 760;
+      var targetHeight = viewportHeight - 320;
+      var minimumHeight = 180;
+      var launcherList = el("launcherButtons");
+      var snippetList = el("snippetButtons");
+
+      if (targetHeight < minimumHeight) {
+        targetHeight = minimumHeight;
+      }
+
+      if (launcherList) {
+        launcherList.style.maxHeight = targetHeight + "px";
+      }
+
+      if (snippetList) {
+        snippetList.style.maxHeight = targetHeight + "px";
+      }
+    }
+
+    function setInitialWindowSize() {
+      var targetWidth = 1100;
+      var targetHeight = 760;
+      var maxWidth = screen && screen.availWidth ? screen.availWidth : 1600;
+      var maxHeight = screen && screen.availHeight ? screen.availHeight : 1200;
+      var rightMargin = 80;
+      var bottomMargin = 80;
+      var centeredX = 0;
+      var centeredY = 0;
+
+      if (!window.resizeTo) {
+        return;
+      }
+
+      if (targetWidth > maxWidth - rightMargin) {
+        targetWidth = maxWidth - rightMargin;
+      }
+
+      if (targetHeight > maxHeight - bottomMargin) {
+        targetHeight = maxHeight - bottomMargin;
+      }
+
+      if (targetWidth < 760) {
+        targetWidth = 760;
+      }
+
+      if (targetHeight < 520) {
+        targetHeight = 520;
+      }
+
+      window.resizeTo(targetWidth, targetHeight);
+
+      if (window.moveTo) {
+        centeredX = Math.max(0, Math.floor((maxWidth - targetWidth) / 2));
+        centeredY = Math.max(0, Math.floor((maxHeight - targetHeight) / 2));
+        window.moveTo(centeredX, centeredY);
       }
     }
 
@@ -1052,6 +1109,13 @@
       updateLauncherDeleteToggleButton();
       updateSnippetDeleteToggleButton();
       loadAllEntries();
+      setInitialWindowSize();
+      showOnlyPanel("homePanel");
+      updateListViewportMaxHeight();
+
+      window.onresize = function() {
+        updateListViewportMaxHeight();
+      };
 
       bindEnterToAction("appName", createLauncherButton);
       bindEnterToAction("folderPath", createLauncherButton);
@@ -1060,14 +1124,10 @@
   </script>
 </head>
 <body>
-  <h3>OriginPlanet Launcher</h3>
-  <p class="subtitle">A tiny in-window launcher with persistent shortcuts.</p>
-
   <div id="homePanel" class="panel">
-    <div class="row">
-      <button class="primary" onclick="sayHello()">Press me</button>
-      <span id="msg"></span>
-    </div>
+    <h3>OriginPlanet Launcher</h3>
+    <p class="subtitle">A tiny in-window launcher with persistent shortcuts.</p>
+
     <div class="row">
       <button class="primary" onclick="openLauncher()">Open Path Opener Extension</button>
       <button class="primary" onclick="openSnippetPanel()">Open Pasting Extension</button>
