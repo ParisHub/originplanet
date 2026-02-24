@@ -1,0 +1,55 @@
+Local Helper Bridge Contract (Current)
+======================================
+
+Purpose
+-------
+A minimal manual bridge with two separately opened components:
+1) `local-worker.hta` (opened by user, stays running)
+2) `index.html` (opened by user, sends commands)
+
+Current behavior
+----------------
+- User opens `local-worker.hta` manually first.
+- User opens `index.html` manually.
+- User clicks one button in `index.html`.
+- HTML writes a command JSON to `localStorage` key:
+  `localHelperBridge.command`
+- HTA polls that key and executes `explorer.exe C:\` for action `open-c`.
+- HTA writes acknowledgement JSON to `localStorage` key:
+  `localHelperBridge.ack`
+- HTML shows status after acknowledgement.
+
+Command schema
+--------------
+{
+  "id": "cmd-<timestamp>",
+  "action": "open-c",
+  "createdAt": "ISO-8601",
+  "source": "local-helper-bridge-ui"
+}
+
+Acknowledgement schema
+----------------------
+{
+  "commandId": "cmd-...",
+  "status": "ok | error",
+  "message": "text",
+  "acknowledgedAt": "ISO-8601",
+  "worker": "local-worker.hta"
+}
+
+No simulation mode
+------------------
+- No simulated backend behavior exists.
+- If HTA is not running or no ack arrives, HTML only shows warning status.
+
+Compatibility note
+------------------
+- HTA now checks whether `window.localStorage` exists before calling `getItem`/`setItem`.
+- If unavailable in that host configuration, HTA shows a warning instead of throwing script errors.
+
+Runtime requirements
+--------------------
+- Both files should be opened on the same machine/user profile.
+- Local storage must be available to both HTML and HTA hosts.
+- HTA requires ActiveX (`WScript.Shell`) to run Explorer command.

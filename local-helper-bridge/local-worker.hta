@@ -1,0 +1,161 @@
+<html>
+  <head>
+    <title>HTA Helper</title>
+    <HTA:APPLICATION
+      ID="LocalWorker"
+      APPLICATIONNAME="LocalWorker"
+      BORDER="thin"
+      SCROLL="no"
+      SINGLEINSTANCE="yes"
+      SYSMENU="yes"
+      WINDOWSTATE="normal"
+      SHOWINTASKBAR="yes"
+    />
+    <script language="javascript">
+      var BRIDGE_COMMAND_KEY = 'localHelperBridge.command';
+      var BRIDGE_ACK_KEY = 'localHelperBridge.ack';
+      var LAST_COMMAND_ID = null;
+
+      function getStorageSafe() {
+        try {
+          if (window.localStorage && typeof window.localStorage.getItem === 'function') {
+            return window.localStorage;
+          }
+        } catch (error) {
+          return null;
+        }
+
+        return null;
+      }
+
+      function parseJsonCompat(rawText) {
+        if (!rawText) {
+          return null;
+        }
+
+        if (window.JSON && typeof window.JSON.parse === 'function') {
+          return window.JSON.parse(rawText);
+        }
+
+        return new Function('return (' + rawText + ');')();
+      }
+
+      function stringifyJsonCompat(value) {
+        if (window.JSON && typeof window.JSON.stringify === 'function') {
+          return window.JSON.stringify(value);
+        }
+
+        return '{"status":"error","message":"JSON stringify unavailable"}';
+      }
+
+      function setStatus(text) {
+        var el = document.getElementById('status');
+
+        if (el) {
+          el.innerText = text;
+        }
+      }
+
+      function publishAck(commandId, status, message) {
+        var storage = getStorageSafe();
+
+        if (!storage) {
+          setStatus('.hta helper warning\nlocalStorage unavailable for ack');
+          return;
+        }
+
+        var ack = {
+          commandId: commandId,
+          status: status,
+          message: message || '',
+          acknowledgedAt: new Date().toISOString(),
+          worker: 'local-worker.hta'
+        };
+
+        storage.setItem(BRIDGE_ACK_KEY, stringifyJsonCompat(ack));
+      }
+
+      function handleCommand(command) {
+        if (!command || !command.id || command.id === LAST_COMMAND_ID) {
+          return;
+        }
+
+        LAST_COMMAND_ID = command.id;
+
+        if (command.action !== 'open-c') {
+          setStatus('.hta helper is running\nUnknown action: ' + command.action);
+          publishAck(command.id, 'error', 'Unknown action');
+          return;
+        }
+
+        try {
+          var shell = new ActiveXObject('WScript.Shell');
+          shell.Run('explorer.exe C:\\', 1, false);
+          setStatus('.hta helper is running\nLast command: open-c\nC:\\ opened in Explorer');
+          publishAck(command.id, 'ok', 'Explorer launched');
+        } catch (error) {
+          setStatus('.hta helper error\n' + error.message);
+          publishAck(command.id, 'error', error.message);
+        }
+      }
+
+      function pollBridge() {
+        var storage = getStorageSafe();
+
+        if (!storage) {
+          setStatus('.hta helper warning\nlocalStorage unavailable in this HTA host');
+          return;
+        }
+
+        var commandRaw = storage.getItem(BRIDGE_COMMAND_KEY);
+        var command;
+
+        try {
+          command = parseJsonCompat(commandRaw);
+        } catch (error) {
+          setStatus('.hta helper warning\nFailed to parse command');
+          return;
+        }
+
+        handleCommand(command);
+      }
+
+      function startWorker() {
+        setStatus('.hta helper is running\nWaiting for commands from HTML...');
+        window.setInterval(pollBridge, 500);
+      }
+    </script>
+    <style>
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        font-family: Segoe UI, Arial, sans-serif;
+      }
+
+      .frame {
+        height: 100%;
+        display: grid;
+        place-items: center;
+        text-align: center;
+        padding: 14px;
+        color: #ffffff;
+        background: linear-gradient(160deg, #2d66d9 0%, #1a48a9 100%);
+      }
+
+      .status {
+        white-space: pre-line;
+        font-size: 17px;
+        font-weight: 600;
+        line-height: 1.45;
+      }
+    </style>
+  </head>
+  <body onload="startWorker()">
+    <div class="frame">
+      <div id="status" class="status">.hta helper is running</div>
+    </div>
+  </body>
+</html>
